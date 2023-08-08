@@ -30,7 +30,7 @@
             if($this->simpleform_template != '') {
                 include($this->simpleform_template);
             } else {
-                include('_simpleform_default_template.php');
+                require_once('_simpleform_default_template.php');
             }
         }
     
