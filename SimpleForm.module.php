@@ -218,13 +218,13 @@
     
         public function simpleFormSettingsDefaults() {
             return array(
-                'sender_name' => 'Atelier Pummer Kontaktform',
-                'sender_email' => 'contactform@atelier-pummer.at',
-                'receiver_name' => 'Atelier Pummer Office',
-                'receiver_email' => 'dev@atelier-pummer.at',
-                'bcc_debug_email' => 'dev@atelier-pummer.at',
-                'email_imprint' => 'Atelier Pummer Email Imprint',
-                'privacy_checkbox_text' => 'I have read the <a href="terms-and-conditions">terms and conditions</a> and the <a href="privacy-policy">privacy policy</a> and accept them.',
+                'sender_name' => 'DataJungle Kontaktform',
+                'sender_email' => 'hi@datajungle.xyz',
+                'receiver_name' => 'DataJungle Office',
+                'receiver_email' => 'hi@datajungle.xyz',
+                'bcc_debug_email' => 'hi@datajungle.xyz',
+                'email_imprint' => 'DataJungle Email Imprint',
+                'privacy_checkbox_text' => 'I have read the <a href="privacy-policy">privacy policy</a> and accept them.',
                 'allowed_attachment_format_extensions' => 'pdf doc docx jpg jpeg',
                 'success_url' => '/contact/success',
                 'error_url' => '/contact/error',
