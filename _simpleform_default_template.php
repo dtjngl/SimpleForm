@@ -1,6 +1,6 @@
 <?php namespace ProcessWire; ?>
 
-    <form id="simpleform" method="post" action="/submit" enctype="multipart/form-data">
+    <form id="simpleform" method="post" action="/submit" lang="<?=$this->user->language->name?>" enctype="multipart/form-data">
 
         <h1 class="centered uk-margin-medium uk-margin-bottom-large"><?=wire('page')->title?></h1>
 
@@ -8,24 +8,25 @@
                 
                 <div id="infoalert" class="infoalert uk-input uk-width-1-1 uk-margin-auto uk-flex-center uk-alert-warning"></div>
                     
-                <h3>Anrede, Vorname* und Nachname*</h3>
+                <h3><?=_x('Anrede, Vorname und Nachname', 'simpleform');?>*</h3>
 
                 <input 
                     class="formfield uk-input uk-width-1-1 uk-flex-center" 
                     type="text" 
                     id="salutation" 
-                    title="Anrede" 
+                    title="<?=_x('Anrede', 'simpleform');?>" 
                     name="salutation" 
-                    placeholder="Anrede"
+                    placeholder="<?=_x('Anrede', 'simpleform');?>"
                     >
                     
                 <input 
                     class="formfield required uk-input uk-width-1-1 uk-flex-center" 
                     type="text" 
                     id="givenname" 
-                    title="Vorname" 
+                    title="<?=_x('Vorname', 'simpleform');?>" 
                     name="givenname" 
-                    placeholder="Vorname"
+                    placeholder="<?=_x('Vorname', 'simpleform');?>"
+                    data-error-key-required="required_givenname"
                     required
                     >
                     
@@ -33,50 +34,59 @@
                     class="formfield required uk-input uk-width-1-1 uk-flex-center" 
                     type="text" 
                     id="familyname" 
-                    title="Nachname" 
+                    title="<?=_x('Nachname', 'simpleform');?>" 
                     name="familyname" 
-                    placeholder="Nachname"
+                    placeholder="<?=_x('Nachname', 'simpleform');?>"
+                    data-error-key-required="required_familyname"
                     required
                     >
                     
-                <h3>E-Mail-Adresse*</h3>
-                    
+                <h3><?=_x('E-Mail-Adresse', 'simpleform');?>*</h3>
+
                 <input 
                     class="formfield required uk-input uk-width-1-1 uk-flex-center" 
                     type="email" 
-                    title="E-Mail-Adresse" 
+                    title="<?=_x('E-Mail-Adresse', 'simpleform');?>" 
                     name="emailaddress" 
                     id="emailaddress" 
-                    placeholder="E-Mail-Adresse"
+                    placeholder="<?=_x('E-Mail-Adresse', 'simpleform');?>"
                     onDrag="return false" 
                     onDrop="return false"
+                    data-error-key-required="required_emailaddress"
+                    data-error-key-wrong="required_emailaddress"
                     required
                     >
                                                     
-                <h3>Betreff*</h3>
-                    
+                <h3><?=_x('Betreff', 'simpleform');?>*</h3>
+
                 <input 
                     class="formfield required uk-input uk-width-1-1 uk-flex-center" 
                     type="text" 
                     id="subject" 
-                    title="Betreff" 
+                    title="<?=_x('Betreff', 'simpleform');?>" 
                     name="subject" 
-                    placeholder="Betreff"
+                    placeholder="<?=_x('Betreff', 'simpleform');?>"
+                    data-error-key-required="required_subject"
                     required
                     >
                                         
-                <h3>Nachricht*</h3>
-                        
+                <h3><?=_x('Nachricht', 'simpleform');?>*</h3>
+
                 <textarea 
                     class="formfield required uk-textarea uk-width-1-1 uk-flex-center" 
-                    title="Nachricht" 
+                    title="<?=_x('Nachricht', 'simpleform');?>" 
                     name="message" 
                     id="message" 
                     rows="12" 
-                    placeholder="Nachricht" required></textarea>
+                    placeholder="<?=_x('Nachricht', 'simpleform');?>" 
+                    data-error-key-required="required_message"
+                    required></textarea>
 
                 <div class="uk-margin uk-grid-small uk-child-width-auto uk-grid">
-                    <label><input id="privacyCheckbox" class="uk-checkbox" type="checkbox">&nbsp;&nbsp;ich habe die <a href="<?=wire('pages')->get('datenschutz')->url?>" target="_blank">Datenschutzerklärung</a> zur Kenntnis genommen und akzeptiere diese.</label>
+                    <label>
+                        <input id="privacyCheckbox" class="uk-checkbox" type="checkbox" data-error-key-required="required_privacyCheckbox" required/>
+                        &nbsp;&nbsp;<?php echo $this->checkAndGetLanguageValue('privacy_checkbox_text', '__');?>
+                    </label>
                 </div>
 
                 <input 
@@ -93,7 +103,7 @@
                     </div>
                 </div>
 
-                <h4><strong>* Pflichtfelder</strong></h4>
+                <h3>* <?=_x('Pflichtfelder', 'simpleform');?></h3>
 
                 <div id="grecaptcha" class="g-recaptcha"
                 data-sitekey="<?=$this->google_recaptcha_site_key?>"
@@ -106,7 +116,7 @@
                     title="submit" 
                     class="g-recaptcha centered uk-button uk-button-primary uk-width-1-2@m uk-width-1-1@s uk-form-width-medium uk-align-right uk-margin-medium-top noselect" 
                     name="sendform" 
-                    value="Absenden"
+                    value="<?=_x('absenden', 'simpleform');?>"
                 />
                 
         </div>

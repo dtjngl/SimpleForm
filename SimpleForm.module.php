@@ -34,6 +34,20 @@
             }
         }
     
+        protected function checkAndGetLanguageValue(string $key, string $x='') {
+            $fieldNameString = $this->getLanguageString($key, $x);
+            return $this->$fieldNameString;
+        }
+
+        protected function getLanguageString(string $key, string $x) {
+            $language = $this->user->language;
+            if ($language->name !== 'default') {
+                $string = $key.$x.$language->id;
+                return $string;
+            } 
+            return $key;
+        }
+    
         public function ___install() {
             wire('modules')->saveModuleConfigData($this, self::simpleFormSettingsDefaults()); 
 
@@ -285,7 +299,7 @@
                 try {
                     $filename = $this->handleFileUpload($input, $response, $uploadPath, $maxFileSize, $allowedFileTypes);
                 } catch (WireException $err) {
-                    array_push($response['errors'], 'Email konnte nicht versendet werden: ' . $err->getMessage());
+                    array_push($response['errors'], _x('Email konnte nicht versendet werden:', 'SimpleForm') . ' ' . $err->getMessage());
                     throw $err;
                 }
             }
@@ -293,9 +307,9 @@
             // Proceed with sending the email
             $wireemail_order = wireMail();
             $wireemail_order->to($this->receiver_email);
-            $wireemail_order->toName($this->receiver_name);
+            $wireemail_order->toName($this->checkAndGetLanguageValue($this->receiver_name, '__'));
             $wireemail_order->from($this->sender_email);
-            $wireemail_order->fromName($this->sender_name); 
+            $wireemail_order->fromName($this->checkAndGetLanguageValue($this->sender_name, '__')); 
             
             if($this->bcc_debug_email!=''){
                 $wireemail_order->bcc($this->bcc_debug_email);

@@ -1,5 +1,41 @@
 document.addEventListener('DOMContentLoaded', (event) => {
     
+    const errorMessages = {
+
+        "required_givenname": {
+            "default": "Das Feld Vorname muss ausgefüllt werden!",
+            "english": "The field First Name is required!"
+        },
+        "required_familyname": {
+            "default": "Das Feld Nachname muss ausgefüllt werden!",
+            "english": "The field Last Name is required!"
+        },
+        "required_emailaddress": {
+            "default": "Das Feld E-Mail-Adresse muss ausgefüllt werden!",
+            "english": "The field Email Address is required!"
+        },
+        "wrong_emailaddress": {
+            "default": "Die Email-Adresse ist nicht gültig!",
+            "english": "The Email Address is not valid!"
+        },
+        "required_subject": {
+            "default": "Das Feld Betreff muss ausgefüllt werden!",
+            "english": "The field Subject is required!"
+        },
+        "required_message": {
+            "default": "Das Feld Nachricht muss ausgefüllt werden!",
+            "english": "The field Message is required!"
+        },
+        "required_privacyCheckbox": {
+            "default": "Sie müssen die Datenschutzerklärung akzeptieren!",
+            "english": "You must accept the Privacy Policy!"
+        }
+    }
+    
+    // Access the 'lang' attribute of the <form> element
+    const formElement = document.getElementById('simpleform');
+    const pageLanguage = formElement.lang;
+
     document.getElementById('sendform').addEventListener('click', validateForm);
         
     document.querySelector("#simpleform").addEventListener('keydown', function(event) {
@@ -24,17 +60,23 @@ document.addEventListener('DOMContentLoaded', (event) => {
         fields.forEach((field) => {
             if (field.hasAttribute('required') && !field.value) {
                 valid = false;
-                infoalert.innerHTML += 'Das Feld ' + field.title + ' muss ausgefüllt werden!<br>'; // Add the error message for this field to the alert box.
+                const errorKey = field.getAttribute('data-error-key-required');
+                const errorMessage = errorMessages[errorKey][pageLanguage];
+                infoalert.innerHTML += errorMessage + '<br>';
             }
             if (field.type === 'email' && !validateEmail(field.value)) {
                 valid = false;
-                infoalert.innerHTML += 'Die Email-Adresse ist nicht gültig!<br>'; // Add the error message for this field to the alert box.
+                const errorKey = field.getAttribute('data-error-key-wrong');
+                const errorMessage = errorMessages[errorKey][pageLanguage];
+                infoalert.innerHTML += errorMessage + '<br>';
             }
         });
 
         if (!privacyCheckbox.checked) {
             valid = false;
-            infoalert.innerHTML += 'Sie müssen die Datenschutzerklärung akzeptieren!<br>'; // Add an error message for the privacy policy acceptance.
+            const errorKey = privacyCheckbox.getAttribute('data-error-key-required');
+            const errorMessage = errorMessages[errorKey][pageLanguage];
+            infoalert.innerHTML += errorMessage + '<br>';
         }
 
         if(valid) {
