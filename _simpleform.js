@@ -134,6 +134,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
                     console.log(data.redirectURL);
                     console.log(data.errors);
                     window.location.href = window.location.origin + data.redirectURL;
+                    // console.log("window.location.origin + data.redirectURL: " + window.location.origin + data.redirectURL)
                 } else {
                     // Handle the response as before
                     const infoalert = document.getElementById('infoalert');

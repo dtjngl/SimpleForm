@@ -67,14 +67,18 @@ $config = array(
         'type' => 'text',
         'value' => '',
         'columnWidth' => 50,
-        'description' => 'enter path to success URL relative to home'
+        'description' => 'enter path to error URL including the language segment',
+        'notes' => 'e.g. /en/contact/success',
+        'useLanguages' => true,
       ),
       'error_url' => array(
         'label' => 'Error URL',
         'type' => 'text',
         'value' => '',
         'columnWidth' => 50,
-        'description' => 'enter path to error URL relative to home'
+        'description' => 'enter path to error URL including the language segment',
+        'notes' => 'e.g. /en/contact/error',
+        'useLanguages' => true,
       ),
       'google_recaptcha_site_key' => array(
         'type' => 'text',

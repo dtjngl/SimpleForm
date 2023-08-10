@@ -399,11 +399,11 @@
         //   }
     
         public function getSuccessURL() {
-            return $this->pages->get('/')->httpUrl.$this->success_url;
+            return $this->pages->get('/')->httpUrl.$this->checkAndGetLanguageValue('success_url', '__');
         }
     
         public function getErrorURL() {
-            return $this->pages->get('/')->httpUrl.$this->error_url;
+            return $this->pages->get('/')->httpUrl.$this->checkAndGetLanguageValue('error_url', '__');
         }
 
         protected function getCaptcha($token) {
