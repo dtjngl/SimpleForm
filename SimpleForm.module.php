@@ -247,7 +247,7 @@
                 if (isset($captchaResponse) && $captchaResponse->success == false) {
                     throw new WireException('Captcha abgelaufen');
                 }
-                $this->sendOrderEmails($input, $response);
+                $this->sendEmails($input, $response);
         
                 // If no exceptions were thrown, the operation was successful
                 $response['status'] = 'success';
@@ -268,7 +268,7 @@
         }
             
         // public function handleStaticContent($input) {
-        //     if($this->issetOrder()==false){$this->resetOrder();}
+        //     if($this->isset()==false){$this->reset();}
         //     if($this->issetPayPalSession()==false){$this->resetPayPalSession();}
         //     if(isset($input->get->PayerID)){$this->setPayPalPayerId($input->get->PayerID);}
         //     if(isset($input->get->token)){$this->setPayPalToken($input->get->token);}
@@ -278,21 +278,13 @@
 
 
         
-        protected function sendOrderEmails($input, &$response) {
+        protected function sendEmails($input, &$response) {
 
             $uploadPath = $this->config->paths->assets . 'files/'; // Define the file upload path
             $maxFileSize = 1024 * 1024; // Set a maximum file size, e.g., 1MB
             $allowedFileTypes = explode(" ", $this->allowed_attachment_format_extensions); // Define allowed file types
             $allowedFileTypes = array_map('trim', $allowedFileTypes);
-            bd($allowedFileTypes);
             $filename = '';
-
-            // try {
-            //     $filename = $this->handleFileUpload($input, $response, $uploadPath, $maxFileSize, $allowedFileTypes);
-            // } catch (WireException $err) {
-            //     array_push($response['errors'], 'Email konnte nicht versendet werden: ' . $err->getMessage());
-            //     throw $err;
-            // }
 
             // If a file was uploaded, handle it
             if (!empty($_FILES['attachment']['name'])) {
@@ -305,33 +297,31 @@
             }
 
             // Proceed with sending the email
-            $wireemail_order = wireMail();
-            $wireemail_order->to($this->receiver_email);
-            $wireemail_order->toName($this->checkAndGetLanguageValue($this->receiver_name, '__'));
-            $wireemail_order->from($this->sender_email);
-            $wireemail_order->fromName($this->checkAndGetLanguageValue($this->sender_name, '__')); 
+            $wireemail = wireMail();
+            $wireemail->to($this->receiver_email);
+            $wireemail->toName($this->receiver_name);
+            $wireemail->from($this->sender_email);
+            $wireemail->fromName($this->sender_name); 
             
             if($this->bcc_debug_email!=''){
-                $wireemail_order->bcc($this->bcc_debug_email);
+                $wireemail->bcc($this->bcc_debug_email);
             }
             
-            $wireemail_order->subject($input->post->subject);
-            $wireemail_order->bodyHTML($input->post->message);
-            $wireemail_order->replyto($input->post->emailaddress);
-            
-            // The file validation and handling code comes first
-            // $inputfile = $input->files('file'); // Retrieve the uploaded file
-                            
+            $wireemail->subject($input->post->subject);
+            $wireemail->bodyHTML($input->post->message);
+            $wireemail->replyto($input->post->emailaddress);
+                                        
             if ($filename) {
-                $wireemail_order->attachment($uploadPath . $filename);
+                $wireemail->attachment($uploadPath . $filename);
             }
 
-            $numSent = $wireemail_order->send();
+            $numSent = $wireemail->send();
         
-            $wireemail_order->logActivity($wireemail_order); // you may log success if you want
-            $wireemail_order->logError($wireemail_order); // you may log errors, too. - Errors are also logged automaticaly
+            $wireemail->logActivity($wireemail); // you may log success if you want
+            $wireemail->logError($wireemail); // you may log errors, too. - Errors are also logged automaticaly
         
-            $response['data'] = json_encode($wireemail_order);
+            $response['data'] = json_encode($wireemail);
+            
             return $numSent > 0;
             
         }
@@ -352,8 +342,6 @@
             $fileInfo = pathinfo($_FILES['attachment']['name']);
             $fileExtension = strtolower($fileInfo['extension']);
             
-            bd($fileExtension);
-
             if (!in_array($fileExtension, $allowedFileTypes)) {
                 throw new WireException('Invalid file type. Allowed file types are: ' . implode(', ', $allowedFileTypes));
             }

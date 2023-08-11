@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
         }
     }
     
+    const submitButton = document.getElementById('sendform');
+
     // Access the 'lang' attribute of the <form> element
     const formElement = document.getElementById('simpleform');
     const pageLanguage = formElement.lang;
@@ -50,6 +52,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
     function validateForm(event) {
 
         event.preventDefault();
+
+        // Disable the submit button
+        submitButton.disabled = true;
+
         const infoalert = document.getElementById('infoalert');
         const fields = document.querySelectorAll("#simpleform input, #simpleform textarea");
         const privacyCheckbox = document.getElementById('privacyCheckbox');
@@ -82,6 +88,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
         if(valid) {
             sendFormData();
         }
+
+        if (!valid) {
+            // Re-enable the submit button if the form is not valid
+            submitButton.disabled = false;
+        }
+        
     }
 
     function sendFormData() {
@@ -104,31 +116,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 });
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const contentType = response.headers.get("content-type");
-                if (contentType && contentType.indexOf("application/json") !== -1) {
-                    return response.json();
-                } else {
-                    throw new Error('Server did not respond with JSON.');
-                }
+                // Log the response object directly
+                console.log('Raw response:', response);
+        
+                return response.json().then(jsonData => {
+                    console.log('Parsed JSON:', jsonData);
+                    return jsonData;
+                });
             })
-            // .then(data => {
-            //     const infoalert = document.getElementById('infoalert');
-            //     if(data.errors) {
-            //         // Handle errors here
-            //         console.error(data.errors);
-            //         data.errors.forEach(err => {
-            //             infoalert.innerHTML += err + '<br>'; // Add the error messages returned by the server to the alert box.
-            //         });
-            //     } else {
-            //         // Handle success here
-            //         infoalert.innerHTML = 'Form successfully submitted!'; // Add a success message to the alert box.
-            //         infoalert.style.display = 'inline-block';
-            //         console.log(data);
-            //     }
-            // })
             .then(data => {
                 if(data.redirectURL) {
                     console.log(data.redirectURL);
@@ -153,8 +148,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 }
             })
             .catch(error => {
+                // Re-enable the submit button if there's an error
+                submitButton.disabled = false;
                 console.error('Error:', error);
             })
+
         );
     }
     
