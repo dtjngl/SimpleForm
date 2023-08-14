@@ -29,8 +29,38 @@ document.addEventListener('DOMContentLoaded', (event) => {
         "required_privacyCheckbox": {
             "default": "Sie müssen die Datenschutzerklärung akzeptieren!",
             "english": "You must accept the Privacy Policy!"
+        },
+        "json_parse_error": {
+            "default": "[Translation for: 'Failed to parse JSON from server response.']",
+            "english": "Failed to parse JSON from server response."
+        },
+        "server_error": {
+            "default": "[Translation for: 'Server Error:'] {error}",
+            "english": "Server Error: {error}"
+        },
+        "form_success": {
+            "default": "[Translation for: 'Form successfully submitted!']",
+            "english": "Form successfully submitted!"
+        },
+        "too_many_files": {
+            "default": "Sie können maximal {maxFileCount} Dateien hochladen.",
+            "english": "You can upload a maximum of {maxFileCount} files."
+        },
+        "totalSizeExceeded": {
+            "default": "Die Gesamtgröße aller Dateien überschreitet die maximal zulässige Größe von {maxTotalSizeMB}MB.",
+            "english": "The total size of all files exceeds the maximum allowed size of {maxTotalSizeMB}MB."
+        },
+        "invalid_extension": {
+            "default": "Die Datei {filename} hat eine ungültige Erweiterung. Zulässige Erweiterungen sind: {allowedExtensions}.",
+            "english": "File {filename} has an invalid extension. Allowed extensions are: {allowedExtensions}."
         }
+            
     }
+    
+    const filesInput = document.querySelector("#simpleform input[type='file']");
+    let maxTotalFileSize = parseInt(filesInput.getAttribute('data-maxtotalfilesize'));
+    let allowedFileCount = parseInt(filesInput.getAttribute('data-maxfileamount')); 
+    let allowedExtensions = filesInput.getAttribute('data-allowedextensions').split(" ");
     
     const submitButton = document.getElementById('sendform');
 
@@ -53,48 +83,98 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         event.preventDefault();
 
+        let errorList = [];
+
         // Disable the submit button
         submitButton.disabled = true;
 
         const infoalert = document.getElementById('infoalert');
-        const fields = document.querySelectorAll("#simpleform input, #simpleform textarea");
-        const privacyCheckbox = document.getElementById('privacyCheckbox');
 
         let valid = true;
         infoalert.innerHTML = ''; // Clear the alert box at the start of each validation attempt.
 
-        fields.forEach((field) => {
-            if (field.hasAttribute('required') && !field.value) {
-                valid = false;
-                const errorKey = field.getAttribute('data-error-key-required');
+        try {
+            
+            const fields = document.querySelectorAll("#simpleform input, #simpleform textarea");
+            const privacyCheckbox = document.getElementById('privacyCheckbox');
+        
+            fields.forEach((field) => {
+                if (field.hasAttribute('required') && !field.value) {
+                    const errorKey = field.getAttribute('data-error-key-required');
+                    const errorMessage = errorMessages[errorKey][pageLanguage];
+                    // throw new Error(errorMessage);
+                    errorList.push(errorMessage)
+                }
+                if (field.type === 'email' && !validateEmail(field.value)) {
+                    const errorKey = field.getAttribute('data-error-key-wrong');
+                    const errorMessage = errorMessages[errorKey][pageLanguage];
+                    // throw new Error(errorMessage);
+                    errorList.push(errorMessage)
+                }
+            });
+        
+            if (!privacyCheckbox.checked) {
+                const errorKey = privacyCheckbox.getAttribute('data-error-key-required');
                 const errorMessage = errorMessages[errorKey][pageLanguage];
-                infoalert.innerHTML += errorMessage + '<br>';
+                // throw new Error(errorMessage);
+                errorList.push(errorMessage)
             }
-            if (field.type === 'email' && !validateEmail(field.value)) {
-                valid = false;
-                const errorKey = field.getAttribute('data-error-key-wrong');
-                const errorMessage = errorMessages[errorKey][pageLanguage];
-                infoalert.innerHTML += errorMessage + '<br>';
+        
+            const filesInput = document.querySelector("#simpleform input[type='file']");
+        
+            let totalSize = 0;
+            for (let i = 0; i < filesInput.files.length; i++) {
+                totalSize += filesInput.files[i].size;
             }
-        });
+            
+            if (totalSize > maxTotalFileSize) {
+                const readableFileSize = (maxTotalFileSize / (1024 * 1024)).toFixed(2); // Convert to MB for readability
+                const errorMessage = errorMessages["totalSizeExceeded"][pageLanguage]
+                    .replace("{maxTotalSizeMB}", readableFileSize);
+                errorList.push(errorMessage);
+            }
+                        
+            // Validate number of files
+            if (filesInput.files.length > allowedFileCount) { 
+                const errorMessage = errorMessages["too_many_files"][pageLanguage]
+                    .replace("{maxFileCount}", allowedFileCount);
+                errorList.push(errorMessage);
+            }
+                    
+            // Validate file sizes and extensions
+            for (let i = 0; i < filesInput.files.length; i++) {
+                let file = filesInput.files[i];
 
-        if (!privacyCheckbox.checked) {
-            valid = false;
-            const errorKey = privacyCheckbox.getAttribute('data-error-key-required');
-            const errorMessage = errorMessages[errorKey][pageLanguage];
-            infoalert.innerHTML += errorMessage + '<br>';
-        }
-
-        if(valid) {
+                // Check file extension
+                let fileExtension = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
+                alert(allowedExtensions)
+                alert(fileExtension)
+                if (!allowedExtensions.includes(fileExtension)) {
+                    const errorMessage = errorMessages["invalid_extension"][pageLanguage]
+                        .replace("{filename}", file.name)
+                        .replace("{allowedExtensions}", allowedExtensions.join(", "));
+                    // throw new Error(errorMessage);
+                    errorList.push(errorMessage);
+                }
+            }
+            
+            if (errorList.length > 0) {
+                submitButton.disabled = false;
+                throw new Error(errorList.join("; "));
+            }
+            
             sendFormData();
-        }
-
-        if (!valid) {
-            // Re-enable the submit button if the form is not valid
+        
+        } catch (error) {
+            const individualErrors = error.message.split("; ");
+            individualErrors.forEach(err => {
+                infoalert.innerHTML += err + '<br>';
+            });
             submitButton.disabled = false;
         }
-        
+
     }
+
 
     function sendFormData() {
         let formData = new FormData(document.querySelector("#simpleform"));
@@ -116,49 +196,52 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 });
             })
             .then(response => {
-                // Log the response object directly
-                console.log('Raw response:', response);
-        
-                return response.json().then(jsonData => {
-                    console.log('Parsed JSON:', jsonData);
-                    return jsonData;
+                console.log('Response Status:', response.status, response.statusText);
+                console.log('Response Headers:', response.headers.get('Content-Type'));
+    
+                return response.text().then(textData => {
+                    console.log('Raw Text Response:', textData);
+                    try {
+                        return JSON.parse(textData);
+                    } catch (e) {
+                        const errorMessage = errorMessages["json_parse_error"][pageLanguage];
+                        throw new Error(errorMessage);
+                    }
                 });
             })
             .then(data => {
+                const infoalert = document.getElementById('infoalert');
                 if(data.redirectURL) {
                     console.log(data.redirectURL);
                     console.log(data.errors);
-                    window.location.href = window.location.origin + data.redirectURL;
+                    // window.location.href = window.location.origin + data.redirectURL;
                     // console.log("window.location.origin + data.redirectURL: " + window.location.origin + data.redirectURL)
                 } else {
-                    // Handle the response as before
-                    const infoalert = document.getElementById('infoalert');
                     if(data.errors) {
-                        // Handle errors here
                         console.error(data.errors);
                         data.errors.forEach(err => {
-                            infoalert.innerHTML += err + '<br>'; // Add the error messages returned by the server to the alert box.
+                            const serverError = errorMessages["server_error"][pageLanguage].replace("{error}", err);
+                            infoalert.innerHTML += serverError + '<br>';
                         });
                     } else {
-                        // Handle success here
-                        infoalert.innerHTML = 'Form successfully submitted!'; // Add a success message to the alert box.
+                        const successMessage = errorMessages["form_success"][pageLanguage];
+                        infoalert.innerHTML = successMessage;
                         infoalert.style.display = 'inline-block';
                         console.log(data);
                     }
                 }
+                submitButton.disabled = false;
             })
             .catch(error => {
-                // Re-enable the submit button if there's an error
-                submitButton.disabled = false;
                 console.error('Error:', error);
+                submitButton.disabled = false;
             })
-
         );
     }
-    
+
+
     function validateEmail(email) {
-        const re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,2,3,4,5,6,7,8,9}\.]))|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,})$/;
-        return re.test(email);
+        return email.includes('@') && email.includes('.');
     }
 
 });

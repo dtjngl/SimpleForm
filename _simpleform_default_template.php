@@ -99,8 +99,17 @@
                 <div class="uk-margin">
                     <div class="uk-inline uk-width-1-1">
                         <span class="uk-form-icon" uk-icon="icon: upload"></span>
-                        <input class="uk-input" type="file" id="attachment" name="attachment">
+                        <input 
+                            class="uk-input" 
+                            type="file" 
+                            id="attachment" 
+                            name="attachment[]" 
+                            data-maxfileamount="<?=$this->simpleform_maxfileamount?>"
+                            data-maxtotalfilesize="<?=$this->simpleform_max_total_filesize?>"
+                            data-allowedextensions="<?=$this->allowed_attachment_format_extensions?>"
+                            multiple>
                     </div>
+                    <span><?= sprintf(_x('erlaubte Formate: %s', 'simpleform'), $this->allowed_attachment_format_extensions) ?></span>
                 </div>
 
                 <h3>* <?=_x('Pflichtfelder', 'simpleform');?></h3>

@@ -56,12 +56,6 @@ $config = array(
         'value' => '',
         'useLanguages' => true
       ),
-      'allowed_attachment_format_extensions' => array(
-        'label' => 'Allowed attachments format extensions',
-        'type' => 'text',
-        'description' => 'enter the allowed format extensions for uploaded attachments separated by a white space',
-        'value' => '',
-      ),
       'success_url' => array(
         'label' => 'Success URL',
         'type' => 'text',
@@ -91,5 +85,26 @@ $config = array(
         'label' => 'Google reCAPTCHA Secret Key',
         'value' => '',
         'columnWidth' => 50,
+      ),
+      'simpleform_maxfileamount' => array(
+        'label' => 'SimpleForm Maximum amount of attachments',
+        'type' => 'integer',
+        'value' => 10,
+        'required' => true,
+        'description' => 'enter the maximum amount of attachments a user can upload',
+        'columnWidth' => 50,
+      ),
+      'simpleform_max_total_filesize' => array(
+        'label' => 'SimpleForm maximum attachment file size',
+        'type' => 'integer',
+        'required' => true,
+        'description' => 'enter the maximum total file size of all attachments',
+        'columnWidth' => 50,
+      ),
+      'allowed_attachment_format_extensions' => array(
+        'label' => 'Allowed attachments format extensions',
+        'type' => 'text',
+        'description' => 'enter the allowed format extensions for uploaded attachments separated by a white space',
+        'value' => '',
       )
   );
