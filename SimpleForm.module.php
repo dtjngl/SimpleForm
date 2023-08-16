@@ -229,6 +229,11 @@
 
         public function init() {
             $this->checkOutPage = $this->pages->get('template=simpleForm_checkout');   
+            if ($this->loadingImageURL != '') {
+                $this->loadingImageURL = wire('urls')->httpTemplates.$this->loadingImageURL;
+            } else {
+                $this->loadingImageURL = wire('urls')->httpSiteModules.'SimpleForm/loading.gif';
+            }
         }
     
 
@@ -316,18 +321,20 @@
         protected function sendAdminEmail($input, &$response) {
 
             $uploadPath = $this->config->paths->assets . 'SimpleFormUploads/'; // Define the file upload path
-            $maxFileSize = $this->simpleform_max_total_filesize; // Set a maximum file size, e.g., 1MB
-            $allowedFileTypes = explode(" ", $this->allowed_attachment_format_extensions); // Define allowed file types
-            $allowedFileTypes = array_map('trim', $allowedFileTypes);
+            $this->allowedFileTypes = explode(" ", $this->allowed_attachment_format_extensions);
+            $this->allowedFileTypes = array_map('trim', $this->allowedFileTypes);
             $savedFiles = []; // An array to store saved file names
 
             try {
 
-                if (isset($input->files->attachment)) {
-                    $this->validateUploadedFiles($input->files->attachment, $allowedFileTypes, $maxFileSize);
+                if (isset($_FILES['attachment']) && $_FILES['attachment']['error'][0] == UPLOAD_ERR_OK) {
+                    $fileData = $_FILES['attachment'];
         
-                    foreach ($input->files->attachment['tmp_name'] as $key => $tmpFilePath) {
-                        $filename = basename($input->files->attachment['name'][$key]);
+                    // Validate files
+                    $this->validateUploadedFiles($fileData, $this->simpleform_max_total_filesize);
+        
+                    foreach ($fileData['tmp_name'] as $key => $tmpFilePath) {
+                        $filename = basename($fileData['name'][$key]);
                         $destinationPath = $uploadPath . $filename;
                         if (move_uploaded_file($tmpFilePath, $destinationPath)) {
                             $savedFiles[] = $destinationPath;
@@ -336,7 +343,7 @@
                         }
                     }
                 }
-        
+                        
                 // Proceed with sending the email
                 $wireemail = wireMail();
                 $wireemail->to($this->receiver_email);
@@ -352,48 +359,14 @@
                 $wireemail->bodyHTML($input->post->message);
                 $wireemail->replyto($input->post->emailaddress);
                                             
-                // if (!empty($filename)) {
-                //     foreach($filename as $file) {
-                //         $wireemail->attachment($uploadPath . $file);
-                //     }
-                // }
-
-                // if (isset($input->files->attachment)) {
-                //     foreach($input->files->attachment['tmp_name'] as $tmpFilePath) {
-                //         $wireemail->attachment($tmpFilePath);
-                //     }
-                // }
-
-                echo '$_FILES';
-                var_dump($_FILES);
-
-                echo '$input->file';
-                var_dump(isset($input->files));
-
-                echo '$input->files->attachment';
-                var_dump(isset($input->files->attachment));
-
-                if (isset($input->files->attachment)) {
-                    // foreach($input->files->attachment['tmp_name'] as $tmpFilePath) {
-                    //     if (!file_exists($tmpFilePath)) {
-                    //         throw new Exception("File does not exist: $tmpFilePath");
-                    //     }
-                    //     $wireemail->attachment($tmpFilePath);
-                    // }
-                    echo 'HI';
-                    var_dump($input->files->attachment);
-                } else {
-                    echo "No attachment found!";
-                }
-
-                // Attach saved files to the email
+                // Attach saved files to the email (if there are any)
                 foreach ($savedFiles as $filePath) {
                     $wireemail->attachment($filePath);
                 }
 
                 $numSent = $wireemail->send();
 
-                // Optionally, delete the saved files
+                // Optionally, delete the saved files after sending
                 foreach ($savedFiles as $filePath) {
                     unlink($filePath);
                 }
@@ -417,94 +390,37 @@
         }
         
         
-        protected function validateUploadedFiles($fileData, $allowedFileTypes, $maxFileSize) {
+        protected function validateUploadedFiles($filesData) {
             // Handling individual file errors
-            foreach ($fileData['error'] as $error) {
+            foreach ($filesData['error'] as $error) {
                 if ($error != UPLOAD_ERR_OK) {
                     $errorMessage = $this->getUploadErrorMessage($error);
                     throw new WireException($errorMessage);
                 }
             }
         
-            if (count($fileData['name']) > $this->simpleform_maxfileamount) {
+            if (count($filesData['name']) > $this->simpleform_maxfileamount) {
                 throw new WireException('Number of files exceeds the limit of ' . $this->simpleform_maxfileamount . ' files.');
             }
         
             // Checking total file sizes
-            $totalSize = array_sum($fileData['size']);
-            
-            if ($totalSize > $maxFileSize) {
-                throw new WireException('Total file size exceeds the limit of ' . $maxFileSize . ' bytes.');
+            $totalSize = array_sum($filesData['size']);
+        
+            if ($totalSize > $this->simpleform_max_total_filesize) {
+                throw new WireException('Total file size exceeds the limit of ' . $this->simpleform_max_total_filesize . ' bytes.');
             }
-            
+        
             // Checking file extensions
-            foreach ($fileData['name'] as $filename) {
-                $fileInfo = pathinfo($filename);
-                $fileExtension = strtolower($fileInfo['extension']);
-            
-                if (!in_array($fileExtension, $allowedFileTypes)) {
-                    throw new WireException('Invalid file type. Allowed file types are: ' . implode(', ', $allowedFileTypes));
+            foreach ($filesData['name'] as $filename) {
+                $fileExtension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                print_r($this->allowedFileTypes);
+                if (!in_array($fileExtension, $this->allowedFileTypes)) {
+                    throw new WireException('Invalid file type. Allowed file types are: ' . implode(', ', $this->allowedFileTypes));
                 }
             }
         }
-
         
-        protected function handleFileUpload($input, &$response, $uploadPath, $maxFileSize, $allowedFileTypes) {
-    
-            $filenames = [];
-            
-            // Handling individual file errors
-            foreach ($input->files->attachment['error'] as $error) {
-                if ($error != UPLOAD_ERR_OK) {
-                    $errorMessage = $this->getUploadErrorMessage($error);
-                    throw new WireException($errorMessage);
-                }
-            }
-
-            if (count($input->files->attachment['name']) > $this->simpleform_maxfileamount) {
-                throw new WireException('Number of files exceeds the limit of ' . $this->simpleform_maxfileamount . ' files.');
-            }
-            
-            // Checking file sizes
-            $totalSize = 0;
-            foreach ($input->files->attachment['size'] as $size) {
-                $totalSize += $size;
-            }
-            
-            if ($totalSize > $maxFileSize) {
-                throw new WireException('Total file size exceeds the limit of ' . $maxFileSize . ' bytes.');
-            }
-                        
-            // Checking file extensions
-            foreach ($input->files->attachment['name'] as $filename) {
-                $fileInfo = pathinfo($filename);
-                $fileExtension = strtolower($fileInfo['extension']);
-            
-                if (!in_array($fileExtension, $allowedFileTypes)) {
-                    throw new WireException('Invalid file type. Allowed file types are: ' . implode(', ', $allowedFileTypes));
-                }
-            
-                $filenames[] = $filename;  // Add each filename to the array
-            }
-                        
-            $u = new WireUpload('attachment');
-            $u->setMaxFileSize($maxFileSize);
-            $u->setOverwrite(true);
-            $u->setDestinationPath($uploadPath);
-            $u->setValidExtensions($allowedFileTypes);
-            $u->setMaxFiles($this->simpleform_maxfileamount);  // for example, allowing up to 10 files
-            
-            $filenames = $u->execute();
-            
-            if(!$filenames) {
-                throw new WireException('Files could not be saved: ' . implode(', ', $u->getErrors(true)));
-            }
-                        
-            return $filenames;  // This now returns an array of filenames
-        
-        }
-
-        
+                
         // A new helper function to provide a human-readable file upload error message
         protected function getUploadErrorMessage($code) {
             switch ($code) {
@@ -541,17 +457,6 @@
         }
         
         
-        // SETTER AND GETTER
-    
-        //   public function setPayPalAccessToken(string $PayPalAccessToken):void{
-        //     $_SESSION['simpleForm']['PayPalSession']['PayPalAccessToken'] = $PayPalAccessToken;
-        //   }
-    
-        //   public function getPayPalAccessToken():?string{
-        //     return isset($_SESSION['simpleForm']['PayPalSession']['PayPalAccessToken'])?$_SESSION['simpleForm']['PayPalSession']['PayPalAccessToken']:null;
-        //   }
-    
-
         public function getSuccessURL() {
             return $this->pages->get('/')->httpUrl.$this->checkAndGetLanguageValue('success_url', '__');
         }

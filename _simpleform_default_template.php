@@ -6,7 +6,7 @@
 
         <div class="uk-grid-small uk-margin-auto uk-width-1-1@s uk-width-1-2@m">
                 
-                <div id="infoalert" class="infoalert uk-input uk-width-1-1 uk-margin-auto uk-flex-center uk-alert-warning"></div>
+                <div id="infoalert" style="background:yellow;" class="infoalert uk-input uk-width-1-1 uk-margin-auto uk-flex-center uk-alert-warning"></div>
                     
                 <h3><?=_x('Anrede, Vorname und Nachname', 'simpleform');?>*</h3>
 
@@ -53,7 +53,7 @@
                     onDrag="return false" 
                     onDrop="return false"
                     data-error-key-required="required_emailaddress"
-                    data-error-key-wrong="required_emailaddress"
+                    data-error-key-wrong="wrong_emailaddress"
                     required
                     >
                                                     
@@ -128,6 +128,10 @@
                     value="<?=_x('absenden', 'simpleform');?>"
                 />
                 
+        </div>
+
+        <div id="loadingOverlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.8);">
+            <img src="<?=$this->loadingImageURL?>" alt="Loading..." style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" />
         </div>
 
     </form>

@@ -106,5 +106,11 @@ $config = array(
         'type' => 'text',
         'description' => 'enter the allowed format extensions for uploaded attachments separated by a white space',
         'value' => '',
+      ),
+      'loadingImageURL' => array(
+        'label' => 'Loading Image',
+        'type' => 'text',
+        'description' => 'Image to show when the form is submitted until a response returns',
+        'value' => ''
       )
   );

@@ -56,6 +56,18 @@ document.addEventListener('DOMContentLoaded', (event) => {
         }
             
     }
+
+    const ReCaptchaSiteKey = grecaptcha.dataset.sitekey;
+
+    const infoalert = document.getElementById('infoalert');
+
+    infoalert.addEventListener('DOMSubtreeModified', function() {
+        if (this.innerHTML.trim() !== "") {
+            this.style.display = 'inline-block';
+        } else {
+            this.style.display = 'none';
+        }
+    });
     
     const filesInput = document.querySelector("#simpleform input[type='file']");
     let maxTotalFileSize = parseInt(filesInput.getAttribute('data-maxtotalfilesize'));
@@ -64,179 +76,188 @@ document.addEventListener('DOMContentLoaded', (event) => {
     
     const submitButton = document.getElementById('sendform');
 
+    // Global error handler
+    window.onerror = function(message, source, lineno, colno, error) {
+        console.error('An error occurred:', message, 'at line:', lineno, 'of source:', source);
+        infoalert.innerHTML = 'An error occurred: ' + message + ' at line: ' + lineno + ' of source: ' + source;
+        // You can also handle the error or do any cleanup here
+        document.getElementById('loadingOverlay').style.display = 'none';
+        submitButton.disabled = false;
+        console.log("Global error caught:", message);
+    };
+
     // Access the 'lang' attribute of the <form> element
     const formElement = document.getElementById('simpleform');
     const pageLanguage = formElement.lang;
 
-    document.getElementById('sendform').addEventListener('click', validateForm);
+    document.getElementById('sendform').addEventListener('click', handleForm);
         
-    document.querySelector("#simpleform").addEventListener('keydown', function(event) {
-        // The key code for enter key is 13
-        if (event.keyCode == 13) {
-            // Prevent the default action
-            event.preventDefault();
+    document.querySelector("#simpleform").addEventListener("keypress", function(evt) {
+        if (evt.keyCode == 13 && evt.target.tagName !== "TEXTAREA") {
+            evt.preventDefault();
             return false;
         }
     });
+    
+
+    async function handleForm(event) {
+
+        event.preventDefault();
+        
+        console.log("Starting form handler...");
+
+        try {
+
+            console.log("About to validate...");
+            validateForm(); // If there's an error, it will throw and go to the catch block below
+            
+            console.log("About to get token...");
+            let token = await getRecaptchaToken();
+            console.log("Token received:", token);
+            
+            console.log("About to send form data...");
+            let response = await sendFormData(token);
+            console.log("Data sent successfully!");
+            
+            submitButton.disabled = false
+            // Handle successful server response here
+    
+        } catch (error) {
+            // Handle any errors here, either from validateForm, recaptcha or sendFormData
+            infoalert.innerHTML = error.message;
+            console.error(error.message)
+            submitButton.disabled = false;
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+    }
+    
 
     function validateForm(event) {
 
-        event.preventDefault();
-
+        infoalert.innerHTML = '';
         let errorList = [];
 
         // Disable the submit button
         submitButton.disabled = true;
 
-        const infoalert = document.getElementById('infoalert');
-
         let valid = true;
-        infoalert.innerHTML = ''; // Clear the alert box at the start of each validation attempt.
-
-        try {
             
-            const fields = document.querySelectorAll("#simpleform input, #simpleform textarea");
-            const privacyCheckbox = document.getElementById('privacyCheckbox');
-        
-            fields.forEach((field) => {
-                if (field.hasAttribute('required') && !field.value) {
-                    const errorKey = field.getAttribute('data-error-key-required');
-                    const errorMessage = errorMessages[errorKey][pageLanguage];
-                    // throw new Error(errorMessage);
-                    errorList.push(errorMessage)
-                }
-                if (field.type === 'email' && !validateEmail(field.value)) {
-                    const errorKey = field.getAttribute('data-error-key-wrong');
-                    const errorMessage = errorMessages[errorKey][pageLanguage];
-                    // throw new Error(errorMessage);
-                    errorList.push(errorMessage)
-                }
-            });
-        
-            if (!privacyCheckbox.checked) {
-                const errorKey = privacyCheckbox.getAttribute('data-error-key-required');
+        const fields = document.querySelectorAll("#simpleform input, #simpleform textarea");
+        const privacyCheckbox = document.getElementById('privacyCheckbox');
+    
+        fields.forEach((field) => {
+            if (field.hasAttribute('required') && !field.value) {
+                const errorKey = field.getAttribute('data-error-key-required');
                 const errorMessage = errorMessages[errorKey][pageLanguage];
-                // throw new Error(errorMessage);
+                errorList.push(errorMessage)
+            } else if (field.type === 'email' && !validateEmail(field.value)) {
+                const errorKey = field.getAttribute('data-error-key-wrong');
+                const errorMessage = errorMessages[errorKey][pageLanguage];
                 errorList.push(errorMessage)
             }
+        });
+    
+        if (!privacyCheckbox.checked) {
+            const errorKey = privacyCheckbox.getAttribute('data-error-key-required');
+            const errorMessage = errorMessages[errorKey][pageLanguage];
+            errorList.push(errorMessage)
+        }
+    
+        const filesInput = document.querySelector("#simpleform input[type='file']");
+    
+        let totalSize = 0;
+        for (let i = 0; i < filesInput.files.length; i++) {
+            totalSize += filesInput.files[i].size;
+        }
         
-            const filesInput = document.querySelector("#simpleform input[type='file']");
-        
-            let totalSize = 0;
-            for (let i = 0; i < filesInput.files.length; i++) {
-                totalSize += filesInput.files[i].size;
-            }
-            
-            if (totalSize > maxTotalFileSize) {
-                const readableFileSize = (maxTotalFileSize / (1024 * 1024)).toFixed(2); // Convert to MB for readability
-                const errorMessage = errorMessages["totalSizeExceeded"][pageLanguage]
-                    .replace("{maxTotalSizeMB}", readableFileSize);
-                errorList.push(errorMessage);
-            }
-                        
-            // Validate number of files
-            if (filesInput.files.length > allowedFileCount) { 
-                const errorMessage = errorMessages["too_many_files"][pageLanguage]
-                    .replace("{maxFileCount}", allowedFileCount);
-                errorList.push(errorMessage);
-            }
+        if (totalSize > maxTotalFileSize) {
+            const readableFileSize = (maxTotalFileSize / (1024 * 1024)).toFixed(2); // Convert to MB for readability
+            const errorMessage = errorMessages["totalSizeExceeded"][pageLanguage]
+                .replace("{maxTotalSizeMB}", readableFileSize);
+            errorList.push(errorMessage);
+        }
                     
-            // Validate file sizes and extensions
-            for (let i = 0; i < filesInput.files.length; i++) {
-                let file = filesInput.files[i];
+        // Validate number of files
+        if (filesInput.files.length > allowedFileCount) { 
+            const errorMessage = errorMessages["too_many_files"][pageLanguage]
+                .replace("{maxFileCount}", allowedFileCount);
+            errorList.push(errorMessage);
+        }
+                
+        // Validate file sizes and extensions
+        for (let i = 0; i < filesInput.files.length; i++) {
+            let file = filesInput.files[i];
 
-                // Check file extension
-                let fileExtension = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
-                alert(allowedExtensions)
-                alert(fileExtension)
-                if (!allowedExtensions.includes(fileExtension)) {
-                    const errorMessage = errorMessages["invalid_extension"][pageLanguage]
-                        .replace("{filename}", file.name)
-                        .replace("{allowedExtensions}", allowedExtensions.join(", "));
-                    // throw new Error(errorMessage);
-                    errorList.push(errorMessage);
-                }
+            // Check file extension
+            let fileExtension = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
+            if (!allowedExtensions.includes(fileExtension)) {
+                const errorMessage = errorMessages["invalid_extension"][pageLanguage]
+                    .replace("{filename}", file.name)
+                    .replace("{allowedExtensions}", allowedExtensions.join(", "));
+                errorList.push(errorMessage);
             }
-            
-            if (errorList.length > 0) {
-                submitButton.disabled = false;
-                throw new Error(errorList.join("; "));
-            }
-            
-            sendFormData();
+        }
         
-        } catch (error) {
-            const individualErrors = error.message.split("; ");
-            individualErrors.forEach(err => {
-                infoalert.innerHTML += err + '<br>';
-            });
-            submitButton.disabled = false;
+        if (errorList.length > 0) {
+            throw new Error(errorList.join("<br>"));
         }
 
     }
 
 
-    function sendFormData() {
+    async function sendFormData(token) {
         let formData = new FormData(document.querySelector("#simpleform"));
+        formData.set("captchaToken", token);
     
-        const grecaptcha = document.getElementById('grecaptcha');
-        const ReCaptchaSiteKey = grecaptcha.dataset.sitekey;
+        const response = await fetch('./', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        });
     
-        grecaptcha.ready(() =>
-            grecaptcha.execute(ReCaptchaSiteKey, { action: 'submit' })
-            .then(token => {
-                formData.set("captchaToken", token);
+        if (!response.ok) {
+            // This means the HTTP response status is not in the 200-299 range.
+            // We throw an error to catch it in the main error handling mechanism.
+            throw new Error("Server returned an error. Status: " + response.status);
+        }
     
-                return fetch('./', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        "X-Requested-With": "XMLHttpRequest"
-                    }
-                });
-            })
-            .then(response => {
-                console.log('Response Status:', response.status, response.statusText);
-                console.log('Response Headers:', response.headers.get('Content-Type'));
+        const textData = await response.text();
     
-                return response.text().then(textData => {
-                    console.log('Raw Text Response:', textData);
-                    try {
-                        return JSON.parse(textData);
-                    } catch (e) {
-                        const errorMessage = errorMessages["json_parse_error"][pageLanguage];
-                        throw new Error(errorMessage);
-                    }
-                });
-            })
-            .then(data => {
-                const infoalert = document.getElementById('infoalert');
-                if(data.redirectURL) {
-                    console.log(data.redirectURL);
-                    console.log(data.errors);
-                    // window.location.href = window.location.origin + data.redirectURL;
-                    // console.log("window.location.origin + data.redirectURL: " + window.location.origin + data.redirectURL)
-                } else {
-                    if(data.errors) {
-                        console.error(data.errors);
-                        data.errors.forEach(err => {
-                            const serverError = errorMessages["server_error"][pageLanguage].replace("{error}", err);
-                            infoalert.innerHTML += serverError + '<br>';
-                        });
-                    } else {
-                        const successMessage = errorMessages["form_success"][pageLanguage];
-                        infoalert.innerHTML = successMessage;
-                        infoalert.style.display = 'inline-block';
-                        console.log(data);
-                    }
-                }
-                submitButton.disabled = false;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                submitButton.disabled = false;
-            })
-        );
+        try {
+            let data = JSON.parse(textData);
+            return data; // This will be the `response` in handleForm's await sendFormData(token)
+        } catch (e) {
+            // If there's an error parsing the JSON, we throw an error with a custom message
+            const errorMessage = errorMessages["json_parse_error"][pageLanguage];
+            throw new Error(errorMessage);
+        }
+    }
+        
+
+    function getRecaptchaToken() {
+        return new Promise((resolve, reject) => {
+            const TIMEOUT = 10000; // Set timeout to 5 seconds
+    
+            // Set up a timer to reject the promise after 5 seconds
+            const timer = setTimeout(() => {
+                reject(new Error("ReCAPTCHA took too long to respond"));
+            }, TIMEOUT);
+    
+            grecaptcha.ready(() => {
+                grecaptcha.execute(ReCaptchaSiteKey, { action: 'submit' })
+                    .then(token => {
+                        clearTimeout(timer);  // Clear the timer if we got the token
+                        if (token) {
+                            resolve(token);
+                        } else {
+                            reject(new Error("Received an empty ReCAPTCHA token"));
+                        }
+                    });
+            });
+        }); 
     }
 
 
