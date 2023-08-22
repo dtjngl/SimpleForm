@@ -33,6 +33,22 @@ $config = array(
         'value' => '',
         'columnWidth' => 50,
       ),
+      // 'confirmation_email' => array(
+      //   'label' => 'Confirmation Email',
+      //   'type' => 'checkbox',
+      //   'description' => 'send a confirmation email to the user',
+      //   'notes' => '',
+      //   'value' => '',
+      //   'columnWidth' => 50,
+      // ),
+      // 'confirmation_email_body' => array(
+      //   'label' => 'Confirmation Email Body',
+      //   'type' => 'CKEditor',
+      //   'description' => 'enter the content of the Email that is send as a confirmation to the user upon submission. You can use Rich text.',
+      //   'notes' => 'use this variables to customise the content: {fullnameAndTitle} {subject} {message}',
+      //   'value' => '',
+      //   'useLanguages' => true
+      // ),
       'simpleform_template' => array(
         'label' => 'SimpleForm Template',
         'type' => 'text',

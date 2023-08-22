@@ -31,15 +31,15 @@ document.addEventListener('DOMContentLoaded', (event) => {
             "english": "You must accept the Privacy Policy!"
         },
         "json_parse_error": {
-            "default": "[Translation for: 'Failed to parse JSON from server response.']",
+            "default": "Failed to parse JSON from server response.",
             "english": "Failed to parse JSON from server response."
         },
         "server_error": {
-            "default": "[Translation for: 'Server Error:'] {error}",
+            "default": "Server Error: {error}",
             "english": "Server Error: {error}"
         },
         "form_success": {
-            "default": "[Translation for: 'Form successfully submitted!']",
+            "default": "Formular erfolgreich abgeschickt",
             "english": "Form successfully submitted!"
         },
         "too_many_files": {
@@ -106,6 +106,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
         
         console.log("Starting form handler...");
 
+        let response; // Declare response here
+
         try {
 
             console.log("About to validate...");
@@ -118,20 +120,61 @@ document.addEventListener('DOMContentLoaded', (event) => {
             console.log("About to send form data...");
             let response = await sendFormData(token);
             console.log("Data sent successfully!");
+
+            const infoalert = document.getElementById('infoalert');
+            submitButton.disabled = false;
+
+            if (response.errors && response.errors.length > 0) {
+                // console.error(response.errors);
+                let serverError = '';
+                response.errors.forEach(err => {
+                    let currentError = errorMessages["server_error"][pageLanguage].replace("{error}", err);
+                    serverError += currentError + '<br>';
+                    infoalert.innerHTML += currentError + '<br>';
+                });
             
-            submitButton.disabled = false
-            // Handle successful server response here
-    
+                throw new Error(serverError);
+
+            }
+
+            const successMessage = errorMessages["form_success"][pageLanguage];
+            infoalert.innerHTML = successMessage;
+            
+            if (response && response.successURL) {
+                setTimeout(() => {
+                    window.location.href = window.location.origin + response.successURL;
+                }, 3000);
+            }
+
         } catch (error) {
             // Handle any errors here, either from validateForm, recaptcha or sendFormData
             infoalert.innerHTML = error.message;
-            console.error(error.message)
+            console.log(error)
             submitButton.disabled = false;
             document.getElementById('loadingOverlay').style.display = 'none';
+
+            if (isJSON(error.message)) {
+                let parsedError = JSON.parse(error.message);
+                if (parsedError.errorURL) {
+                    console.log('errorURL: ' + parsedError.errorURL); // Moved this inside if block.
+                    setTimeout(() => {
+                        window.location.href = window.location.origin + response.errorURL;
+                    }, 3000);
+                }
+            }
+    
         }
 
     }
     
+    function isJSON(str) {
+        try {
+            JSON.parse(str);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }    
 
     function validateForm(event) {
 
@@ -205,9 +248,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     }
 
-
     async function sendFormData(token) {
-        let formData = new FormData(document.querySelector("#simpleform"));
+        const formData = new FormData(document.querySelector("#simpleform"));
         formData.set("captchaToken", token);
     
         const response = await fetch('./', {
@@ -218,24 +260,91 @@ document.addEventListener('DOMContentLoaded', (event) => {
             }
         });
     
-        if (!response.ok) {
-            // This means the HTTP response status is not in the 200-299 range.
-            // We throw an error to catch it in the main error handling mechanism.
-            throw new Error("Server returned an error. Status: " + response.status);
-        }
+        console.log('Response Status:', response.status, response.statusText);
+        console.log('Response Headers:', response.headers.get('Content-Type'));
     
         const textData = await response.text();
+        console.log('Raw Text Response:', textData);
     
+        if (response.status === 500) {
+            console.log('500-error: ' + response);
+            throw new Error("The server encountered an issue. Please try again later.");
+        }
+    
+        let data;
         try {
-            let data = JSON.parse(textData);
-            return data; // This will be the `response` in handleForm's await sendFormData(token)
+            data = JSON.parse(textData);
         } catch (e) {
-            // If there's an error parsing the JSON, we throw an error with a custom message
             const errorMessage = errorMessages["json_parse_error"][pageLanguage];
             throw new Error(errorMessage);
         }
+    
+        return data; // Return the parsed JSON data
     }
-        
+
+    
+    // async function sendFormData(token) {
+    //     const formData = new FormData(document.querySelector("#simpleform"));
+    //     formData.set("captchaToken", token); // appending the received token
+    
+    //     const response = await fetch('./', {
+    //         method: 'POST',
+    //         body: formData,
+    //         headers: {
+    //             "X-Requested-With": "XMLHttpRequest"
+    //         }
+    //     });
+    
+    //     console.log('Response Status:', response.status, response.statusText);
+    //     console.log('Response Headers:', response.headers.get('Content-Type'));
+    
+    //     const textData = await response.text();
+    //     console.log('Raw Text Response:', textData);
+    
+    //     if (response.status === 500) {
+    //         throw new Error("The server encountered an issue. Please try again later.");
+    //     }
+
+    //     let data;
+    //     try {
+    //         data = JSON.parse(textData);
+    //     } catch (e) {
+    //         const errorMessage = errorMessages["json_parse_error"][pageLanguage];
+    //         throw new Error(errorMessage);
+    //     }
+    
+    //     const infoalert = document.getElementById('infoalert');
+
+    //     if (data.errors && data.errors.length > 0) {
+    //         console.error(data.errors);
+    //         data.errors.forEach(err => {
+    //             const serverError = errorMessages["server_error"][pageLanguage].replace("{error}", err);
+    //             infoalert.innerHTML += serverError + '<br>';
+    //         });
+    //         infoalert.style.display = 'inline-block'; // Ensure error display
+    //         if (data.errorURL) {
+    //             console.log("Error URL:", data.errorURL);
+    //             setTimeout(() => {
+    //                 window.location.href = window.location.origin + data.errorURL; // Redirect to error page after showing the error for a short duration
+    //             }, 3000); // Change this value to adjust the wait time before redirection
+    //         }
+    //     } else {
+    //         const successMessage = errorMessages["form_success"][pageLanguage];
+    //         infoalert.innerHTML = successMessage;
+    //         infoalert.style.display = 'inline-block'; // Ensure success message display
+    //         console.log(data);
+    //         if (data.successURL) {
+    //             console.log("Success URL:", data.successURL);
+    //             setTimeout(() => {
+    //                 window.location.href = window.location.origin + data.successURL; // Redirect to success page after showing the message for a short duration
+    //             }, 3000); // Change this value to adjust the wait time before redirection
+    //         }
+    //     }
+    
+    //     document.getElementById('loadingOverlay').style.display = 'none';
+    //     return data;
+    // }
+
 
     function getRecaptchaToken() {
         return new Promise((resolve, reject) => {

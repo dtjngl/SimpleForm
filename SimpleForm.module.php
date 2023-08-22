@@ -228,6 +228,11 @@
         
 
         public function init() {
+
+            // set_error_handler([$this, "customError"]);
+            // register_shutdown_function([$this, "fatalErrorShutdownHandler"]);
+            // any other initialization code you might have...
+
             $this->checkOutPage = $this->pages->get('template=simpleForm_checkout');   
             if ($this->loadingImageURL != '') {
                 $this->loadingImageURL = wire('urls')->httpTemplates.$this->loadingImageURL;
@@ -236,6 +241,22 @@
             }
         }
     
+        // public function customError($errno, $errstr, $errfile, $errline) {
+        //     // Use PW's logging system
+        //     $this->log->save('my-module-error', "Error: [$errno] $errstr on line $errline in file $errfile");
+            
+        //     // Send a JSON response if needed
+        //     header('Content-Type: application/json');
+        //     echo json_encode(["status" => "error", "message" => "A server error occurred.", "errorURL" => $this->error_url]);
+        //     exit();
+        // }
+        
+        // public function fatalErrorShutdownHandler() {
+        //     $last_error = error_get_last();
+        //     if ($last_error && $last_error['type'] === E_ERROR) {
+        //         $this->customError($last_error['type'], $last_error['message'], $last_error['file'], $last_error['line']);
+        //     }
+        // }        
 
         public function addScripts() {
             $additionalScripts = '<!-- :D this is the addScripts() hook :D -->';
@@ -271,14 +292,15 @@
             $response['errors'] = [];
             $response['status'] = '';
             $response['message'] = '';
-            $response['redirectURL'] = '';
+            $response['successURL'] = '';
+            $response['errorURL'] = '';
             $adminEmailSuccess = false;
 
             // Captcha Check first
             $captchaResponse = $this->getCaptcha($input->post->captchaToken);
 
             if (isset($captchaResponse) && $captchaResponse->success == false) {
-                $response['errors'][] = 'Captcha abgelaufen';
+                $response['errors'][] = 'Captcha ungültig oder abgelaufen';
                 
                 // Immediately return if captcha is invalid
                 $this->finalizeResponse($response, false);
@@ -300,16 +322,18 @@
 
         
         private function finalizeResponse(&$response, $success) {
+
             if($success) {
                 $response['status'] = 'success';
                 $response['message'] = 'Email sent successfully.';
-                $response['redirectURL'] = $this->success_url;
             } else {
                 $response['status'] = 'error';
                 $response['message'] = __('Something went wrong, we are taking care of it.');
                 $this->sendErrorEmail(implode(", ", $response['errors']));
-                $response['redirectURL'] = $this->error_url;
             }
+
+            $response['successURL'] = $this->success_url;
+            $response['errorURL'] = $this->error_url;
         
             header('Content-Type: application/json');
 
@@ -366,6 +390,12 @@
 
                 $numSent = $wireemail->send();
 
+                // Check the result of the mail sending and log an error if recipients failed.
+                $result = $wireemail->getResult();
+                if (count($result['recipientsFailed'])) {
+                    $response['errors'][] = _x('Email server failed to send the email, please try again later:', 'SimpleForm');
+                }
+
                 // Optionally, delete the saved files after sending
                 foreach ($savedFiles as $filePath) {
                     unlink($filePath);
@@ -413,7 +443,7 @@
             // Checking file extensions
             foreach ($filesData['name'] as $filename) {
                 $fileExtension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                print_r($this->allowedFileTypes);
+                // print_r($this->allowedFileTypes);
                 if (!in_array($fileExtension, $this->allowedFileTypes)) {
                     throw new WireException('Invalid file type. Allowed file types are: ' . implode(', ', $this->allowedFileTypes));
                 }
@@ -457,14 +487,14 @@
         }
         
         
-        public function getSuccessURL() {
-            return $this->pages->get('/')->httpUrl.$this->checkAndGetLanguageValue('success_url', '__');
-        }
+        // public function getSuccessURL() {
+        //     return $this->pages->get('/')->httpUrl.$this->checkAndGetLanguageValue('success_url', '__');
+        // }
     
 
-        public function getErrorURL() {
-            return $this->pages->get('/')->httpUrl.$this->checkAndGetLanguageValue('error_url', '__');
-        }
+        // public function getErrorURL() {
+        //     return $this->pages->get('/')->httpUrl.$this->checkAndGetLanguageValue('error_url', '__');
+        // }
 
 
         protected function getCaptcha($token) {
