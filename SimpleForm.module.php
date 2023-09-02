@@ -45,7 +45,7 @@
 
         protected function getLanguageString(string $key, string $x) {
             $language = $this->user->language;
-            if ($language->name !== 'default') {
+            if ($language && $language->name !== 'default') {
                 $string = $key.$x.$language->id;
                 return $string;
             } 
@@ -140,11 +140,13 @@
             // Make all pages active for all languages
             $languages = $this->languages;
             $pagesToActivate = array($contactPage, $successPage, $errorPage);
-            foreach($pagesToActivate as $page) {
-                foreach($languages as $language) {
-                    $page->set("status{$language->id}", 1); // Sets the page as active for this language
-                }
-                $page->save(); // Save the status change
+            if ($languages) {
+                foreach($pagesToActivate as $page) {
+                    foreach($languages as $language) {
+                        $page->set("status{$language->id}", 1); // Sets the page as active for this language
+                    }
+                    $page->save(); // Save the status change
+                }    
             }
 
             // Copying a default PHP file for your template
@@ -260,6 +262,7 @@
 
         public function addScripts() {
             $additionalScripts = '<!-- :D this is the addScripts() hook :D -->';
+            $additionalScripts .= '<script src="https://www.google.com/recaptcha/api.js?render='.$this->google_recaptcha_site_key.'"></script>';
             $additionalScripts .= '<script type="text/javascript" src="'.wire('urls')->httpSiteModules.'SimpleForm/_simpleform.js?v='.time().'"></script>';
             $additionalScripts .= '<!-- :D this is the addScripts() hook :D -->';
             return $additionalScripts;
@@ -363,7 +366,7 @@
                         if (move_uploaded_file($tmpFilePath, $destinationPath)) {
                             $savedFiles[] = $destinationPath;
                         } else {
-                            throw new Exception("Failed to save uploaded file: $filename");
+                            throw new WireException("Failed to save uploaded file: $filename");
                         }
                     }
                 }
@@ -402,7 +405,7 @@
                 }
 
                 if ($numSent == 0) {
-                    throw new Exception("Failed to send email to admin.");
+                    throw new WireException("Failed to send email to admin.");
                 }
         
                 $wireemail->logActivity($wireemail); // you may log success if you want
@@ -412,7 +415,7 @@
                 
                 return $numSent > 0;
 
-            } catch (Exception $e) {
+            } catch (WireException $e) {
                 $response['errors'][] = _x('Email konnte nicht versendet werden:', 'SimpleForm') . ' ' . $e->getMessage();
                 return false; // Return failure status
             }

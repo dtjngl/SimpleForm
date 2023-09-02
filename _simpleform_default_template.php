@@ -1,6 +1,10 @@
-<?php namespace ProcessWire; ?>
+<?php namespace ProcessWire;
 
-    <form id="simpleform" method="post" action="/submit" lang="<?=$this->user->language->name?>" enctype="multipart/form-data">
+if ($this->user->language) {$lang = $this->user->language->name;} else {$lang = 'default';}
+
+?>
+
+    <form id="simpleform" method="post" action="/submit" lang="<?=$lang?>" enctype="multipart/form-data">
 
         <h1 class="centered uk-margin-medium uk-margin-bottom-large"><?=wire('page')->title?></h1>
 
@@ -137,5 +141,3 @@
     </form>
 
     <!-- <script type="text/javascript" src="<?=urls()->templates?>scripts/_contact.js?<?=time()?>"></script> -->
-
-    <script src="https://www.google.com/recaptcha/api.js?render=<?=$this->google_recaptcha_site_key?>"></script>

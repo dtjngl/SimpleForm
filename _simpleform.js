@@ -110,6 +110,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         try {
 
+            document.getElementById('loadingOverlay').style.display = 'inline-block';
+
             console.log("About to validate...");
             validateForm(); // If there's an error, it will throw and go to the catch block below
             
@@ -281,69 +283,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
     
         return data; // Return the parsed JSON data
     }
-
-    
-    // async function sendFormData(token) {
-    //     const formData = new FormData(document.querySelector("#simpleform"));
-    //     formData.set("captchaToken", token); // appending the received token
-    
-    //     const response = await fetch('./', {
-    //         method: 'POST',
-    //         body: formData,
-    //         headers: {
-    //             "X-Requested-With": "XMLHttpRequest"
-    //         }
-    //     });
-    
-    //     console.log('Response Status:', response.status, response.statusText);
-    //     console.log('Response Headers:', response.headers.get('Content-Type'));
-    
-    //     const textData = await response.text();
-    //     console.log('Raw Text Response:', textData);
-    
-    //     if (response.status === 500) {
-    //         throw new Error("The server encountered an issue. Please try again later.");
-    //     }
-
-    //     let data;
-    //     try {
-    //         data = JSON.parse(textData);
-    //     } catch (e) {
-    //         const errorMessage = errorMessages["json_parse_error"][pageLanguage];
-    //         throw new Error(errorMessage);
-    //     }
-    
-    //     const infoalert = document.getElementById('infoalert');
-
-    //     if (data.errors && data.errors.length > 0) {
-    //         console.error(data.errors);
-    //         data.errors.forEach(err => {
-    //             const serverError = errorMessages["server_error"][pageLanguage].replace("{error}", err);
-    //             infoalert.innerHTML += serverError + '<br>';
-    //         });
-    //         infoalert.style.display = 'inline-block'; // Ensure error display
-    //         if (data.errorURL) {
-    //             console.log("Error URL:", data.errorURL);
-    //             setTimeout(() => {
-    //                 window.location.href = window.location.origin + data.errorURL; // Redirect to error page after showing the error for a short duration
-    //             }, 3000); // Change this value to adjust the wait time before redirection
-    //         }
-    //     } else {
-    //         const successMessage = errorMessages["form_success"][pageLanguage];
-    //         infoalert.innerHTML = successMessage;
-    //         infoalert.style.display = 'inline-block'; // Ensure success message display
-    //         console.log(data);
-    //         if (data.successURL) {
-    //             console.log("Success URL:", data.successURL);
-    //             setTimeout(() => {
-    //                 window.location.href = window.location.origin + data.successURL; // Redirect to success page after showing the message for a short duration
-    //             }, 3000); // Change this value to adjust the wait time before redirection
-    //         }
-    //     }
-    
-    //     document.getElementById('loadingOverlay').style.display = 'none';
-    //     return data;
-    // }
 
 
     function getRecaptchaToken() {
