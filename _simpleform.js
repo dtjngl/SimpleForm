@@ -90,11 +90,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
     // const filesInput = document.querySelector("#simpleform input[type='file']");
     const filesInput = getElementSafely("#simpleform input[type='file']", 'input');
 
-    if (filesInput) {
+    // if (filesInput) {
         let maxTotalFileSize = parseInt(filesInput.getAttribute('data-maxtotalfilesize'));
         let allowedFileCount = parseInt(filesInput.getAttribute('data-maxfileamount')); 
         let allowedExtensions = filesInput.getAttribute('data-allowedextensions').split(" ");    
-    }
+    // }
 
     const submitButton = document.getElementById('sendform');
 
