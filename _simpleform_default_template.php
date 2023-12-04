@@ -118,9 +118,10 @@ if ($this->user->language) {$lang = $this->user->language->name;} else {$lang = 
 
                 <h3>* <?=_x('Pflichtfelder', 'simpleform');?></h3>
 
-                <div id="grecaptcha" class="g-recaptcha"
-                data-sitekey="<?=$this->google_recaptcha_site_key?>"
-                data-size="invisible">
+                <div id="grecaptcha" 
+                    class="g-recaptcha"
+                    data-sitekey="<?=$this->google_recaptcha_site_key?>"
+                    data-size="invisible">
                 </div>
 
                 <input 

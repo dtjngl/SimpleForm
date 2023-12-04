@@ -1,21 +1,3 @@
-function getElementSafely(selector, elementType = 'any') {
-    const element = document.querySelector(selector);
-
-    if (element) {
-        // Check if the element matches the specified type
-        if (elementType === 'any' || element.nodeName.toLowerCase() === elementType.toLowerCase()) {
-            return element;
-        } else {
-            console.log(`Element with selector '${selector}' is not of type '${elementType}'.`);
-        }
-    } else {
-        console.log(`Element with selector '${selector}' not found in the DOM.`);
-    }
-
-    return null;
-}
-
-
 document.addEventListener('DOMContentLoaded', (event) => {
     
     const errorMessages = {
@@ -87,15 +69,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
         }
     });
     
-    // const filesInput = document.querySelector("#simpleform input[type='file']");
-    const filesInput = getElementSafely("#simpleform input[type='file']", 'input');
-
-    if (filesInput) {
-        let maxTotalFileSize = parseInt(filesInput.getAttribute('data-maxtotalfilesize'));
-        let allowedFileCount = parseInt(filesInput.getAttribute('data-maxfileamount')); 
-        let allowedExtensions = filesInput.getAttribute('data-allowedextensions').split(" ");    
-    }
-
+    const filesInput = document.querySelector("#simpleform input[type='file']");
+    let maxTotalFileSize = parseInt(filesInput.getAttribute('data-maxtotalfilesize'));
+    let allowedFileCount = parseInt(filesInput.getAttribute('data-maxfileamount')); 
+    let allowedExtensions = filesInput.getAttribute('data-allowedextensions').split(" ");
+    
     const submitButton = document.getElementById('sendform');
 
     // Global error handler
@@ -167,7 +145,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
             if (response && response.successURL) {
                 setTimeout(() => {
                     window.location.href = window.location.origin + response.successURL;
-                    console.log(window.location.origin + response.successURL);
                 }, 3000);
             }
 
@@ -184,7 +161,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
                     console.log('errorURL: ' + parsedError.errorURL); // Moved this inside if block.
                     setTimeout(() => {
                         window.location.href = window.location.origin + response.errorURL;
-                        console.log(window.location.origin + response.successURL);
                     }, 3000);
                 }
             }
@@ -233,44 +209,41 @@ document.addEventListener('DOMContentLoaded', (event) => {
             errorList.push(errorMessage)
         }
     
-        // const filesInput = document.querySelector("#simpleform input[type='file']");
-
+        const filesInput = document.querySelector("#simpleform input[type='file']");
+    
         let totalSize = 0;
-
-        if (filesInput) {
-            for (let i = 0; i < filesInput.files.length; i++) {
-                totalSize += filesInput.files[i].size;
-            }
-            
-            if (totalSize > maxTotalFileSize) {
-                const readableFileSize = (maxTotalFileSize / (1024 * 1024)).toFixed(2); // Convert to MB for readability
-                const errorMessage = errorMessages["totalSizeExceeded"][pageLanguage]
-                    .replace("{maxTotalSizeMB}", readableFileSize);
-                errorList.push(errorMessage);
-            }
+        for (let i = 0; i < filesInput.files.length; i++) {
+            totalSize += filesInput.files[i].size;
+        }
+        
+        if (totalSize > maxTotalFileSize) {
+            const readableFileSize = (maxTotalFileSize / (1024 * 1024)).toFixed(2); // Convert to MB for readability
+            const errorMessage = errorMessages["totalSizeExceeded"][pageLanguage]
+                .replace("{maxTotalSizeMB}", readableFileSize);
+            errorList.push(errorMessage);
+        }
                     
-            // Validate number of files
-            if (filesInput.files.length > allowedFileCount) { 
-                const errorMessage = errorMessages["too_many_files"][pageLanguage]
-                    .replace("{maxFileCount}", allowedFileCount);
-                errorList.push(errorMessage);
-            }
+        // Validate number of files
+        if (filesInput.files.length > allowedFileCount) { 
+            const errorMessage = errorMessages["too_many_files"][pageLanguage]
+                .replace("{maxFileCount}", allowedFileCount);
+            errorList.push(errorMessage);
+        }
                 
-            // Validate file sizes and extensions
-            for (let i = 0; i < filesInput.files.length; i++) {
-                let file = filesInput.files[i];
+        // Validate file sizes and extensions
+        for (let i = 0; i < filesInput.files.length; i++) {
+            let file = filesInput.files[i];
 
-                // Check file extension
-                let fileExtension = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
-                if (!allowedExtensions.includes(fileExtension)) {
-                    const errorMessage = errorMessages["invalid_extension"][pageLanguage]
-                        .replace("{filename}", file.name)
-                        .replace("{allowedExtensions}", allowedExtensions.join(", "));
-                    errorList.push(errorMessage);
-                }
+            // Check file extension
+            let fileExtension = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
+            if (!allowedExtensions.includes(fileExtension)) {
+                const errorMessage = errorMessages["invalid_extension"][pageLanguage]
+                    .replace("{filename}", file.name)
+                    .replace("{allowedExtensions}", allowedExtensions.join(", "));
+                errorList.push(errorMessage);
             }
         }
-
+        
         if (errorList.length > 0) {
             throw new Error(errorList.join("<br>"));
         }
@@ -339,6 +312,5 @@ document.addEventListener('DOMContentLoaded', (event) => {
     function validateEmail(email) {
         return email.includes('@') && email.includes('.');
     }
-    
 
 });

@@ -94,13 +94,20 @@ $config = array(
         'type' => 'text',
         'label' => 'Google reCAPTCHA Site Key',
         'value' => '',
-        'columnWidth' => 50,
+        'columnWidth' => 33,
       ),
       'google_recaptcha_secret_key' => array(
         'type' => 'text',
         'label' => 'Google reCAPTCHA Secret Key',
         'value' => '',
-        'columnWidth' => 50,
+        'columnWidth' => 33,
+      ),
+      'google_recaptcha_activate' => array(
+        'label' => 'activate Captcha',
+        'type' => 'checkbox',
+        'description' => 'activate captcha (uncheck when on localhost)',
+        'value' => '',
+        'columnWidth' => 34,
       ),
       'simpleform_maxfileamount' => array(
         'label' => 'SimpleForm Maximum amount of attachments',

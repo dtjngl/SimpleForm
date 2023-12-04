@@ -262,7 +262,9 @@
 
         public function addScripts() {
             $additionalScripts = '<!-- :D this is the addScripts() hook :D -->';
-            $additionalScripts .= '<script src="https://www.google.com/recaptcha/api.js?render='.$this->google_recaptcha_site_key.'"></script>';
+            if ($this->google_recaptcha_activate == 1) {
+                $additionalScripts .= '<script src="https://www.google.com/recaptcha/api.js?render='.$this->google_recaptcha_site_key.'"></script>';
+            }
             $additionalScripts .= '<script type="text/javascript" src="'.wire('urls')->httpSiteModules.'SimpleForm/_simpleform.js?v='.time().'"></script>';
             $additionalScripts .= '<!-- :D this is the addScripts() hook :D -->';
             return $additionalScripts;
@@ -299,15 +301,19 @@
             $response['errorURL'] = '';
             $adminEmailSuccess = false;
 
-            // Captcha Check first
-            $captchaResponse = $this->getCaptcha($input->post->captchaToken);
+            if ($this->google_recaptcha_activate == 1) {
 
-            if (isset($captchaResponse) && $captchaResponse->success == false) {
-                $response['errors'][] = 'Captcha ungültig oder abgelaufen';
-                
-                // Immediately return if captcha is invalid
-                $this->finalizeResponse($response, false);
-                return;
+                // Captcha Check first
+                $captchaResponse = $this->getCaptcha($input->post->captchaToken);
+
+                if (isset($captchaResponse) && $captchaResponse->success == false) {
+                    $response['errors'][] = 'Captcha ungültig oder abgelaufen';
+                    
+                    // Immediately return if captcha is invalid
+                    $this->finalizeResponse($response, false);
+                    return;
+                }
+            
             }
 
             $adminEmailSuccess = $this->sendAdminEmail($input, $response);
