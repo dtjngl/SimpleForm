@@ -382,7 +382,7 @@
                     $wireemail->bcc($this->bcc_debug_email);
                 }
                 
-                $message = $input->post->text('message');
+                $message = $input->post->textarea('message');
 
                 $wireemail->subject($input->post->subject);
                 $wireemail->body($message);
