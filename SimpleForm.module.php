@@ -382,8 +382,15 @@
                     $wireemail->bcc($this->bcc_debug_email);
                 }
                 
+                $message = $input->post->text('message');
+
                 $wireemail->subject($input->post->subject);
-                $wireemail->bodyHTML($input->post->message);
+                $wireemail->body($message);
+                $wireemail->bodyHTML(
+                    '<html><body>' .
+                    nl2br(htmlspecialchars($message, ENT_QUOTES, 'UTF-8')) .
+                    '</body></html>'
+                );
                 $wireemail->replyto($input->post->emailaddress);
                                             
                 // Attach saved files to the email (if there are any)
