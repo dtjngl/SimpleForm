@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         try {
 
-            document.getElementById('loadingOverlay').style.display = 'inline-block';
+            document.getElementById('loadingOverlay').style.display = 'flex';
 
             console.log("About to validate...");
             validateForm(); // If there's an error, it will throw and go to the catch block below

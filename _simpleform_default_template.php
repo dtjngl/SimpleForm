@@ -135,8 +135,8 @@ if ($this->user->language) {$lang = $this->user->language->name;} else {$lang = 
                 
         </div>
 
-        <div id="loadingOverlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.8);">
-            <img src="<?=$this->loadingImageURL?>" alt="Loading..." style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" />
+        <div id="loadingOverlay" style="display: none; position: fixed; inset: 0; z-index: 9999; background-color: rgba(255,255,255,0.8); align-items: center; justify-content: center;">
+            <img src="<?=$this->loadingImageURL?>" alt="Loading..." />
         </div>
 
     </form>
