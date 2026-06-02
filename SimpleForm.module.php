@@ -126,7 +126,7 @@
             $successPage->parent = $this->pages->get('/contact/');
             $successPage->title = 'Success';
             $successPage->name = 'success'; // This will be the URL slug (i.e., /contact/success/)
-            $successPage->body = 'Your form has been successfully submitted!'; // Default success message
+            $successPage->body = __('Your form has been successfully submitted!'); // Default success message
             $successPage->save();
 
             $errorPage = new Page();
@@ -134,7 +134,7 @@
             $errorPage->parent = $this->pages->get('/contact/');
             $errorPage->title = 'Error';
             $errorPage->name = 'error'; // This will be the URL slug (i.e., /contact/error/)
-            $errorPage->body = 'An error occurred while submitting your form. Please try again.'; // Default error message
+            $errorPage->body = __('An error occurred while submitting your form. Please try again.'); // Default error message
             $errorPage->save();
 
             // Make all pages active for all languages
@@ -303,7 +303,7 @@
             $captchaResponse = $this->getCaptcha($input->post->captchaToken);
 
             if (isset($captchaResponse) && $captchaResponse->success == false) {
-                $response['errors'][] = 'Captcha ungültig oder abgelaufen';
+                $response['errors'][] = __('Captcha invalid or expired.');
                 
                 // Immediately return if captcha is invalid
                 $this->finalizeResponse($response, false);
@@ -314,7 +314,7 @@
             // $userEmailErrors = $this->sendConfirmationEmail($input);
             
             if (!$adminEmailSuccess /* || !$userEmailSuccess */) {
-                $response['errors'][] = "There was an issue sending emails.";
+                $response['errors'][] = __('There was an issue sending emails.');
             }
                     
             // Determine success or error based on whether there were any errors accumulated
@@ -328,7 +328,7 @@
 
             if($success) {
                 $response['status'] = 'success';
-                $response['message'] = 'Email sent successfully.';
+                $response['message'] = __('Email sent successfully.');
             } else {
                 $response['status'] = 'error';
                 $response['message'] = __('Something went wrong, we are taking care of it.');
@@ -366,7 +366,7 @@
                         if (move_uploaded_file($tmpFilePath, $destinationPath)) {
                             $savedFiles[] = $destinationPath;
                         } else {
-                            throw new WireException("Failed to save uploaded file: $filename");
+                            throw new WireException(sprintf(__('Failed to save uploaded file: %s'), $filename));
                         }
                     }
                 }
@@ -403,7 +403,7 @@
                 // Check the result of the mail sending and log an error if recipients failed.
                 $result = $wireemail->getResult();
                 if (count($result['recipientsFailed'])) {
-                    $response['errors'][] = _x('Email server failed to send the email, please try again later:', 'SimpleForm');
+                    $response['errors'][] = __('Email server failed to send the email, please try again later.');
                 }
 
                 // Optionally, delete the saved files after sending
@@ -412,7 +412,7 @@
                 }
 
                 if ($numSent == 0) {
-                    throw new WireException("Failed to send email to admin.");
+                    throw new WireException(__('Failed to send email to admin.'));
                 }
         
                 $wireemail->logActivity($wireemail); // you may log success if you want
@@ -423,7 +423,7 @@
                 return $numSent > 0;
 
             } catch (WireException $e) {
-                $response['errors'][] = _x('Email konnte nicht versendet werden:', 'SimpleForm') . ' ' . $e->getMessage();
+                $response['errors'][] = __('Email could not be sent:') . ' ' . $e->getMessage();
                 return false; // Return failure status
             }
                 
@@ -440,14 +440,14 @@
             }
         
             if (count($filesData['name']) > $this->simpleform_maxfileamount) {
-                throw new WireException('Number of files exceeds the limit of ' . $this->simpleform_maxfileamount . ' files.');
+                throw new WireException(sprintf(__('Number of files exceeds the limit of %d files.'), $this->simpleform_maxfileamount));
             }
         
             // Checking total file sizes
             $totalSize = array_sum($filesData['size']);
         
             if ($totalSize > $this->simpleform_max_total_filesize) {
-                throw new WireException('Total file size exceeds the limit of ' . $this->simpleform_max_total_filesize . ' bytes.');
+                throw new WireException(sprintf(__('Total file size exceeds the limit of %d bytes.'), $this->simpleform_max_total_filesize));
             }
         
             // Checking file extensions
@@ -455,7 +455,7 @@
                 $fileExtension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
                 // print_r($this->allowedFileTypes);
                 if (!in_array($fileExtension, $this->allowedFileTypes)) {
-                    throw new WireException('Invalid file type. Allowed file types are: ' . implode(', ', $this->allowedFileTypes));
+                    throw new WireException(sprintf(__('Invalid file type. Allowed file types are: %s'), implode(', ', $this->allowedFileTypes)));
                 }
             }
         }
@@ -465,21 +465,21 @@
         protected function getUploadErrorMessage($code) {
             switch ($code) {
                 case UPLOAD_ERR_INI_SIZE:
-                    return 'The uploaded file exceeds the upload_max_filesize directive in php.ini.';
+                    return __('The uploaded file exceeds the upload_max_filesize directive in php.ini.');
                 case UPLOAD_ERR_FORM_SIZE:
-                    return 'The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form.';
+                    return __('The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form.');
                 case UPLOAD_ERR_PARTIAL:
-                    return 'The uploaded file was only partially uploaded.';
+                    return __('The uploaded file was only partially uploaded.');
                 case UPLOAD_ERR_NO_FILE:
-                    return 'No file was uploaded.';
+                    return __('No file was uploaded.');
                 case UPLOAD_ERR_NO_TMP_DIR:
-                    return 'Missing a temporary folder.';
+                    return __('Missing a temporary folder.');
                 case UPLOAD_ERR_CANT_WRITE:
-                    return 'Failed to write file to disk.';
+                    return __('Failed to write file to disk.');
                 case UPLOAD_ERR_EXTENSION:
-                    return 'File upload stopped by extension.';
+                    return __('File upload stopped by extension.');
                 default:
-                    return 'Unknown upload error.';
+                    return __('Unknown upload error.');
             }
         }
 
