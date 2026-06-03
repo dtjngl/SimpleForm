@@ -165,6 +165,11 @@
                 throw new WireException("Unable to copy the default template file: $defaultTemplateFilePath");
             }
 
+            $moduleConfig = wire('modules')->getModuleConfigData($this);
+            $moduleConfig['success_page'] = $successPage->id;
+            $moduleConfig['error_page'] = $errorPage->id;
+            wire('modules')->saveModuleConfigData($this, $moduleConfig);
+
         }
 
 
@@ -278,6 +283,8 @@
                 'bcc_debug_email' => 'hi@datajungle.xyz',
                 'email_imprint' => 'DataJungle Email Imprint',
                 'privacy_checkbox_text' => 'I have read the <a href="privacy-policy">privacy policy</a> and accept them.',
+                'success_page' => 0,
+                'error_page' => 0,
                 'success_url' => '/contact/success',
                 'error_url' => '/contact/error',
                 'google_recaptcha_site_key' => '',
@@ -335,8 +342,8 @@
                 $this->sendErrorEmail(implode(", ", $response['errors']));
             }
 
-            $response['successURL'] = $this->success_url;
-            $response['errorURL'] = $this->error_url;
+            $response['successURL'] = $this->getSimpleFormRedirectPath('success_page', 'success_url', true);
+            $response['errorURL'] = $this->getSimpleFormRedirectPath('error_page', 'error_url', false);
         
             header('Content-Type: application/json');
 
@@ -497,14 +504,44 @@
         }
         
         
-        // public function getSuccessURL() {
-        //     return $this->pages->get('/')->httpUrl.$this->checkAndGetLanguageValue('success_url', '__');
-        // }
-    
+        protected function getSimpleFormRedirectPath(string $pageProperty, string $urlProperty, bool $isSuccessPage): string {
+            $page = $this->resolveRedirectPage($pageProperty, $isSuccessPage);
+            if($page->id) {
+                return $this->getPageRedirectPath($page);
+            }
 
-        // public function getErrorURL() {
-        //     return $this->pages->get('/')->httpUrl.$this->checkAndGetLanguageValue('error_url', '__');
-        // }
+            $fallbackUrl = trim((string) $this->$urlProperty);
+            return $fallbackUrl !== '' ? $fallbackUrl : '/';
+        }
+
+
+        protected function resolveRedirectPage(string $pageProperty, bool $isSuccessPage): Page {
+            $pageId = (int) $this->$pageProperty;
+            if($pageId) {
+                $page = $this->pages->get($pageId);
+                if($page->id) return $page;
+            }
+
+            return $this->discoverSubmittedPage($isSuccessPage);
+        }
+
+
+        protected function discoverSubmittedPage(bool $isSuccessPage): Page {
+            $nameSelector = $isSuccessPage ? 'danke|thanks|success' : 'fehler|error';
+
+            foreach($this->pages->find('template=simpleform, include=all') as $formPage) {
+                $submittedPage = $formPage->child("template=simpleform-submitted, name=$nameSelector, include=all");
+                if($submittedPage->id) return $submittedPage;
+            }
+
+            return $this->pages->newPage();
+        }
+
+
+        protected function getPageRedirectPath(Page $page): string {
+            $path = parse_url($page->httpUrl, PHP_URL_PATH);
+            return is_string($path) && $path !== '' ? $path : '/';
+        }
 
 
         protected function getCaptcha($token) {
