@@ -1,11 +1,11 @@
 {
     "required_givenname": {
         "de": "Das Feld Vorname muss ausgefüllt werden!",
-        "en": "The field First Name is required!"
+        "en": "The field Given Name is required!"
     },
     "required_familyname": {
         "de": "Das Feld Nachname muss ausgefüllt werden!",
-        "en": "The field Last Name is required!"
+        "en": "The field Family Name is required!"
     },
     "required_emailaddress": {
         "de": "Das Feld E-Mail-Adresse muss ausgefüllt werden!",

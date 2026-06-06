@@ -306,15 +306,18 @@
             $response['errorURL'] = '';
             $adminEmailSuccess = false;
 
-            // Captcha Check first
-            $captchaResponse = $this->getCaptcha($input->post->captchaToken);
+            // Captcha: always on production; on dev only when "activate Captcha" is checked
+            $shouldValidateCaptcha = !$this->config->isDev || !empty($this->google_recaptcha_activate);
+            if ($shouldValidateCaptcha) {
+                $captchaResponse = $this->getCaptcha($input->post->captchaToken);
 
-            if (isset($captchaResponse) && $captchaResponse->success == false) {
-                $response['errors'][] = __('Captcha invalid or expired.');
-                
-                // Immediately return if captcha is invalid
-                $this->finalizeResponse($response, false);
-                return;
+                if (isset($captchaResponse) && $captchaResponse->success == false) {
+                    $response['errors'][] = __('Captcha invalid or expired.');
+
+                    // Immediately return if captcha is invalid
+                    $this->finalizeResponse($response, false);
+                    return;
+                }
             }
 
             $adminEmailSuccess = $this->sendAdminEmail($input, $response);

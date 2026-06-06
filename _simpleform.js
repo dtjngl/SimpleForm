@@ -21,11 +21,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         "required_givenname": {
             "default": "Das Feld Vorname muss ausgefüllt werden!",
-            "english": "The field First Name is required!"
+            "english": "The field Given Name is required!"
         },
         "required_familyname": {
             "default": "Das Feld Nachname muss ausgefüllt werden!",
-            "english": "The field Last Name is required!"
+            "english": "The field Family Name is required!"
         },
         "required_emailaddress": {
             "default": "Das Feld E-Mail-Adresse muss ausgefüllt werden!",
@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         infoalert.innerHTML = html;
         infoalert.classList.remove('hidden');
         infoalert.style.display = '';
+        infoalert.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function hideInfoAlert() {
