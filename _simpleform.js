@@ -20,32 +20,32 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const errorMessages = {
 
         "required_givenname": {
-            "default": "Das Feld Vorname muss ausgefüllt werden!",
-            "english": "The field Given Name is required!"
+            "default": "Das Feld \"vorname\" muss ausgefüllt werden!",
+            "english": "The field \"given name\" is required!"
         },
         "required_familyname": {
-            "default": "Das Feld Nachname muss ausgefüllt werden!",
-            "english": "The field Family Name is required!"
+            "default": "Das Feld \"nachname\" muss ausgefüllt werden!",
+            "english": "The field \"family name\" is required!"
         },
         "required_emailaddress": {
-            "default": "Das Feld E-Mail-Adresse muss ausgefüllt werden!",
-            "english": "The field Email Address is required!"
+            "default": "Das Feld \"e-mail-adresse\" muss ausgefüllt werden!",
+            "english": "The field \"email address\" is required!"
         },
         "wrong_emailaddress": {
-            "default": "Die Email-Adresse ist nicht gültig!",
-            "english": "The Email Address is not valid!"
+            "default": "Die \"e-mail-adresse\" ist nicht gültig!",
+            "english": "The \"email address\" is not valid!"
         },
         "required_subject": {
-            "default": "Das Feld Betreff muss ausgefüllt werden!",
-            "english": "The field Subject is required!"
+            "default": "Das Feld \"betreff\" muss ausgefüllt werden!",
+            "english": "The field \"subject\" is required!"
         },
         "required_message": {
-            "default": "Das Feld Nachricht muss ausgefüllt werden!",
-            "english": "The field Message is required!"
+            "default": "Das Feld \"nachricht\" muss ausgefüllt werden!",
+            "english": "The field \"message\" is required!"
         },
         "required_privacyCheckbox": {
-            "default": "Sie müssen die Datenschutzerklärung akzeptieren!",
-            "english": "You must accept the Privacy Policy!"
+            "default": "Sie müssen die \"datenschutzerklärung\" akzeptieren!",
+            "english": "You must accept the \"privacy policy\"!"
         },
         "json_parse_error": {
             "default": "Failed to parse JSON from server response.",

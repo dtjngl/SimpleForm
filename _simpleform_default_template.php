@@ -113,10 +113,10 @@ if ($this->user->language) {$lang = $this->user->language->name;} else {$lang = 
                             data-allowedextensions="<?=$this->allowed_attachment_format_extensions?>"
                             multiple>
                     </div>
-                    <span><?= sprintf(_x('erlaubte Formate: %s', 'simpleform'), $this->allowed_attachment_format_extensions) ?></span>
+                    <span><?= sprintf(_x('erlaubte formate: %s', 'simpleform'), $this->allowed_attachment_format_extensions) ?></span>
                 </div>
 
-                <h3>* <?=_x('Pflichtfelder', 'simpleform');?></h3>
+                <h3>* <?=_x('pflichtfelder', 'simpleform');?></h3>
 
                 <div id="grecaptcha" 
                     class="g-recaptcha"

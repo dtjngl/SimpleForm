@@ -1,30 +1,30 @@
 {
     "required_givenname": {
-        "de": "Das Feld Vorname muss ausgefüllt werden!",
-        "en": "The field Given Name is required!"
+        "de": "Das Feld \"vorname\" muss ausgefüllt werden!",
+        "en": "The field \"given name\" is required!"
     },
     "required_familyname": {
-        "de": "Das Feld Nachname muss ausgefüllt werden!",
-        "en": "The field Family Name is required!"
+        "de": "Das Feld \"nachname\" muss ausgefüllt werden!",
+        "en": "The field \"family name\" is required!"
     },
     "required_emailaddress": {
-        "de": "Das Feld E-Mail-Adresse muss ausgefüllt werden!",
-        "en": "The field Email Address is required!"
+        "de": "Das Feld \"e-mail-adresse\" muss ausgefüllt werden!",
+        "en": "The field \"email address\" is required!"
     },
     "wrong_emailaddress": {
-        "de": "Die Email-Adresse ist nicht gültig!",
-        "en": "The Email Address is not valid!"
+        "de": "Die \"e-mail-adresse\" ist nicht gültig!",
+        "en": "The \"email address\" is not valid!"
     },
     "required_subject": {
-        "de": "Das Feld Betreff muss ausgefüllt werden!",
-        "en": "The field Subject is required!"
+        "de": "Das Feld \"betreff\" muss ausgefüllt werden!",
+        "en": "The field \"subject\" is required!"
     },
     "required_message": {
-        "de": "Das Feld Nachricht muss ausgefüllt werden!",
-        "en": "The field Message is required!"
+        "de": "Das Feld \"nachricht\" muss ausgefüllt werden!",
+        "en": "The field \"message\" is required!"
     },
     "required_privacyCheckbox": {
-        "de": "Sie müssen die Datenschutzerklärung akzeptieren!",
-        "en": "You must accept the Privacy Policy!"
+        "de": "Sie müssen die \"datenschutzerklärung\" akzeptieren!",
+        "en": "You must accept the \"privacy policy\"!"
     }
 }
