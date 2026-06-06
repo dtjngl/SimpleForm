@@ -28,7 +28,7 @@
         }
 
     
-        protected function renderSimpleForm() {
+        public function renderSimpleForm() {
             if($this->simpleform_template != '') {
                 include($this->simpleform_template);
             } else {

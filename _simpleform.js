@@ -2,7 +2,6 @@ function getElementSafely(selector, elementType = 'any') {
     const element = document.querySelector(selector);
 
     if (element) {
-        // Check if the element matches the specified type
         if (elementType === 'any' || element.nodeName.toLowerCase() === elementType.toLowerCase()) {
             return element;
         } else {
@@ -17,7 +16,7 @@ function getElementSafely(selector, elementType = 'any') {
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
-    
+
     const errorMessages = {
 
         "required_givenname": {
@@ -72,168 +71,156 @@ document.addEventListener('DOMContentLoaded', (event) => {
             "default": "Die Datei {filename} hat eine ungültige Erweiterung. Zulässige Erweiterungen sind: {allowedExtensions}.",
             "english": "File {filename} has an invalid extension. Allowed extensions are: {allowedExtensions}."
         }
-            
-    }
 
-    const ReCaptchaSiteKey = grecaptcha.dataset.sitekey;
-
-    const infoalert = document.getElementById('infoalert');
-
-    infoalert.addEventListener('DOMSubtreeModified', function() {
-        if (this.innerHTML.trim() !== "") {
-            this.style.display = 'inline-block';
-        } else {
-            this.style.display = 'none';
-        }
-    });
-    
-    // const filesInput = document.querySelector("#simpleform input[type='file']");
-    const filesInput = getElementSafely("#simpleform input[type='file']", 'input');
-
-    // if (filesInput) {
-        let maxTotalFileSize = parseInt(filesInput.getAttribute('data-maxtotalfilesize'));
-        let allowedFileCount = parseInt(filesInput.getAttribute('data-maxfileamount')); 
-        let allowedExtensions = filesInput.getAttribute('data-allowedextensions').split(" ");    
-    // }
-
-    const submitButton = document.getElementById('sendform');
-
-    // Global error handler
-    window.onerror = function(message, source, lineno, colno, error) {
-        console.error('An error occurred:', message, 'at line:', lineno, 'of source:', source);
-        infoalert.innerHTML = 'An error occurred: ' + message + ' at line: ' + lineno + ' of source: ' + source;
-        // You can also handle the error or do any cleanup here
-        document.getElementById('loadingOverlay').style.display = 'none';
-        submitButton.disabled = false;
-        console.log("Global error caught:", message);
     };
 
-    // Access the 'lang' attribute of the <form> element
+    const infoalert = document.getElementById('infoalert');
+    const submitButton = document.getElementById('sendform');
     const formElement = document.getElementById('simpleform');
+
+    if (!infoalert || !submitButton || !formElement) {
+        console.error('SimpleForm: required elements missing (#infoalert, #sendform, or #simpleform)');
+        return;
+    }
+
+    const recaptchaEl = document.getElementById('grecaptcha');
+    const ReCaptchaSiteKey = recaptchaEl?.dataset.sitekey;
+
+    function showInfoAlert(html) {
+        infoalert.innerHTML = html;
+        infoalert.classList.remove('hidden');
+        infoalert.style.display = '';
+    }
+
+    function hideInfoAlert() {
+        infoalert.innerHTML = '';
+        infoalert.classList.add('hidden');
+        infoalert.style.display = 'none';
+    }
+
+    const filesInput = getElementSafely("#simpleform input[type='file']", 'input');
+
+    let maxTotalFileSize = 0;
+    let allowedFileCount = 0;
+    let allowedExtensions = [];
+
+    if (filesInput) {
+        maxTotalFileSize = parseInt(filesInput.getAttribute('data-maxtotalfilesize'), 10) || 0;
+        allowedFileCount = parseInt(filesInput.getAttribute('data-maxfileamount'), 10) || 0;
+        allowedExtensions = (filesInput.getAttribute('data-allowedextensions') || '').split(' ').filter(Boolean);
+    }
+
+    const loadingOverlay = document.getElementById('loadingOverlay');
     const pageLanguage = formElement.lang;
 
-    document.getElementById('sendform').addEventListener('click', handleForm);
-        
-    document.querySelector("#simpleform").addEventListener("keypress", function(evt) {
-        if (evt.keyCode == 13 && evt.target.tagName !== "TEXTAREA") {
+    window.onerror = function(message, source, lineno) {
+        console.error('An error occurred:', message, 'at line:', lineno, 'of source:', source);
+        showInfoAlert('An error occurred: ' + message + ' at line: ' + lineno + ' of source: ' + source);
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
+        submitButton.disabled = false;
+    };
+
+    submitButton.addEventListener('click', handleForm);
+
+    formElement.addEventListener('keypress', function(evt) {
+        if (evt.keyCode == 13 && evt.target.tagName !== 'TEXTAREA') {
             evt.preventDefault();
             return false;
         }
     });
-    
+
 
     async function handleForm(event) {
 
         event.preventDefault();
-        
-        console.log("Starting form handler...");
 
-        let response; // Declare response here
+        let response = null;
+        let serverErrorURL = null;
 
         try {
 
-            document.getElementById('loadingOverlay').style.display = 'flex';
+            console.log('About to validate...');
+            validateForm();
 
-            console.log("About to validate...");
-            validateForm(); // If there's an error, it will throw and go to the catch block below
-            
-            console.log("About to get token...");
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+            }
+
+            console.log('About to get token...');
             let token = await getRecaptchaToken();
-            console.log("Token received:", token);
-            
-            console.log("About to send form data...");
-            let response = await sendFormData(token);
-            console.log("Data sent successfully!");
+            console.log('Token received:', token);
 
-            const infoalert = document.getElementById('infoalert');
+            console.log('About to send form data...');
+            response = await sendFormData(token);
+            console.log('Data sent successfully!');
+
             submitButton.disabled = false;
 
             if (response.errors && response.errors.length > 0) {
-                // console.error(response.errors);
                 let serverError = '';
                 response.errors.forEach(err => {
-                    let currentError = errorMessages["server_error"][pageLanguage].replace("{error}", err);
+                    let currentError = errorMessages['server_error'][pageLanguage].replace('{error}', err);
                     serverError += currentError + '<br>';
-                    infoalert.innerHTML += currentError + '<br>';
                 });
-            
+                serverErrorURL = response.errorURL;
                 throw new Error(serverError);
-
             }
 
-            const successMessage = errorMessages["form_success"][pageLanguage];
-            infoalert.innerHTML = successMessage;
-            
+            const successMessage = errorMessages['form_success'][pageLanguage];
+            showInfoAlert(successMessage);
+
             if (response && response.successURL) {
                 setTimeout(() => {
                     window.location.href = window.location.origin + response.successURL;
-                    console.log(window.location.origin + response.successURL);
                 }, 3000);
             }
 
         } catch (error) {
-            // Handle any errors here, either from validateForm, recaptcha or sendFormData
-            infoalert.innerHTML = error.message;
-            console.log(error)
+            showInfoAlert(error.message);
+            console.log(error);
             submitButton.disabled = false;
-            document.getElementById('loadingOverlay').style.display = 'none';
-
-            if (isJSON(error.message)) {
-                let parsedError = JSON.parse(error.message);
-                if (parsedError.errorURL) {
-                    console.log('errorURL: ' + parsedError.errorURL); // Moved this inside if block.
-                    setTimeout(() => {
-                        window.location.href = window.location.origin + response.errorURL;
-                        console.log(window.location.origin + response.successURL);
-                    }, 3000);
-                }
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
             }
-    
+
+            if (serverErrorURL) {
+                setTimeout(() => {
+                    window.location.href = window.location.origin + serverErrorURL;
+                }, 3000);
+            }
         }
 
     }
-    
-    function isJSON(str) {
-        try {
-            JSON.parse(str);
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }    
 
-    function validateForm(event) {
+    function validateForm() {
 
-        infoalert.innerHTML = '';
+        hideInfoAlert();
         let errorList = [];
 
-        // Disable the submit button
         submitButton.disabled = true;
 
-        let valid = true;
-            
-        const fields = document.querySelectorAll("#simpleform input, #simpleform textarea");
+        const fields = document.querySelectorAll('#simpleform input, #simpleform textarea');
         const privacyCheckbox = document.getElementById('privacyCheckbox');
-    
+
         fields.forEach((field) => {
             if (field.hasAttribute('required') && !field.value) {
                 const errorKey = field.getAttribute('data-error-key-required');
                 const errorMessage = errorMessages[errorKey][pageLanguage];
-                errorList.push(errorMessage)
-            } else if (field.type === 'email' && !validateEmail(field.value)) {
+                errorList.push(errorMessage);
+            } else if (field.type === 'email' && field.value && !validateEmail(field.value)) {
                 const errorKey = field.getAttribute('data-error-key-wrong');
                 const errorMessage = errorMessages[errorKey][pageLanguage];
-                errorList.push(errorMessage)
+                errorList.push(errorMessage);
             }
         });
-    
-        if (!privacyCheckbox.checked) {
+
+        if (privacyCheckbox && !privacyCheckbox.checked) {
             const errorKey = privacyCheckbox.getAttribute('data-error-key-required');
             const errorMessage = errorMessages[errorKey][pageLanguage];
-            errorList.push(errorMessage)
+            errorList.push(errorMessage);
         }
-    
-        // const filesInput = document.querySelector("#simpleform input[type='file']");
 
         let totalSize = 0;
 
@@ -241,104 +228,92 @@ document.addEventListener('DOMContentLoaded', (event) => {
             for (let i = 0; i < filesInput.files.length; i++) {
                 totalSize += filesInput.files[i].size;
             }
-            
+
             if (totalSize > maxTotalFileSize) {
-                const readableFileSize = (maxTotalFileSize / (1024 * 1024)).toFixed(2); // Convert to MB for readability
-                const errorMessage = errorMessages["totalSizeExceeded"][pageLanguage]
-                    .replace("{maxTotalSizeMB}", readableFileSize);
+                const readableFileSize = (maxTotalFileSize / (1024 * 1024)).toFixed(2);
+                const errorMessage = errorMessages['totalSizeExceeded'][pageLanguage]
+                    .replace('{maxTotalSizeMB}', readableFileSize);
                 errorList.push(errorMessage);
             }
-                    
-            // Validate number of files
-            if (filesInput.files.length > allowedFileCount) { 
-                const errorMessage = errorMessages["too_many_files"][pageLanguage]
-                    .replace("{maxFileCount}", allowedFileCount);
+
+            if (filesInput.files.length > allowedFileCount) {
+                const errorMessage = errorMessages['too_many_files'][pageLanguage]
+                    .replace('{maxFileCount}', allowedFileCount);
                 errorList.push(errorMessage);
             }
-                
-            // Validate file sizes and extensions
+
             for (let i = 0; i < filesInput.files.length; i++) {
                 let file = filesInput.files[i];
-
-                // Check file extension
-                let fileExtension = file.name.slice(((file.name.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
+                let fileExtension = file.name.slice(((file.name.lastIndexOf('.') - 1) >>> 0) + 2).toLowerCase();
                 if (!allowedExtensions.includes(fileExtension)) {
-                    const errorMessage = errorMessages["invalid_extension"][pageLanguage]
-                        .replace("{filename}", file.name)
-                        .replace("{allowedExtensions}", allowedExtensions.join(", "));
+                    const errorMessage = errorMessages['invalid_extension'][pageLanguage]
+                        .replace('{filename}', file.name)
+                        .replace('{allowedExtensions}', allowedExtensions.join(', '));
                     errorList.push(errorMessage);
                 }
             }
         }
 
         if (errorList.length > 0) {
-            throw new Error(errorList.join("<br>"));
+            throw new Error(errorList.join('<br>'));
         }
 
     }
 
     async function sendFormData(token) {
-        const formData = new FormData(document.querySelector("#simpleform"));
-        formData.set("captchaToken", token);
-    
-        const response = await fetch('./', {
+        const formData = new FormData(formElement);
+        formData.set('captchaToken', token);
+
+        const fetchResponse = await fetch('./', {
             method: 'POST',
             body: formData,
             headers: {
-                "X-Requested-With": "XMLHttpRequest"
+                'X-Requested-With': 'XMLHttpRequest'
             }
         });
-    
-        console.log('Response Status:', response.status, response.statusText);
-        console.log('Response Headers:', response.headers.get('Content-Type'));
-    
-        const textData = await response.text();
-        console.log('Raw Text Response:', textData);
-    
-        if (response.status === 500) {
-            console.log('500-error: ' + response);
-            throw new Error("The server encountered an issue. Please try again later.");
+
+        const textData = await fetchResponse.text();
+
+        if (fetchResponse.status === 500) {
+            throw new Error('The server encountered an issue. Please try again later.');
         }
-    
-        let data;
+
         try {
-            data = JSON.parse(textData);
+            return JSON.parse(textData);
         } catch (e) {
-            const errorMessage = errorMessages["json_parse_error"][pageLanguage];
+            const errorMessage = errorMessages['json_parse_error'][pageLanguage];
             throw new Error(errorMessage);
         }
-    
-        return data; // Return the parsed JSON data
     }
 
 
     function getRecaptchaToken() {
         return new Promise((resolve, reject) => {
-            const TIMEOUT = 10000; // Set timeout to 5 seconds
-    
-            // Set up a timer to reject the promise after 5 seconds
+            const TIMEOUT = 10000;
+
             const timer = setTimeout(() => {
-                reject(new Error("ReCAPTCHA took too long to respond"));
+                reject(new Error('ReCAPTCHA took too long to respond'));
             }, TIMEOUT);
-    
+
             grecaptcha.ready(() => {
                 grecaptcha.execute(ReCaptchaSiteKey, { action: 'submit' })
                     .then(token => {
-                        clearTimeout(timer);  // Clear the timer if we got the token
+                        clearTimeout(timer);
                         if (token) {
                             resolve(token);
                         } else {
-                            reject(new Error("Received an empty ReCAPTCHA token"));
+                            reject(new Error('Received an empty ReCAPTCHA token'));
                         }
-                    });
+                    })
+                    .catch(reject);
             });
-        }); 
+        });
     }
 
 
     function validateEmail(email) {
         return email.includes('@') && email.includes('.');
     }
-    
+
 
 });
